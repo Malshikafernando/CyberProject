@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section page-section reveal">
+    <div class="section-header">
+        <h1>Frequently Asked Questions</h1>
+        <p>These answers help explain the project clearly during demonstrations, reports, and viva discussions.</p>
+    </div>
+
+    <div class="faq-list">
+        <div class="faq-item">
+            <h3>What is cybersecurity risk?</h3>
+            <p>Cybersecurity risk is the possibility that a threat exploits a weakness and causes loss, disruption, or unauthorized access.</p>
+        </div>
+        <div class="faq-item">
+            <h3>How does this system make predictions?</h3>
+            <p>The trained model evaluates 10 input features related to security controls, awareness, vulnerabilities, and monitoring, then predicts a low, medium, or high risk class.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Why combine awareness with technical controls?</h3>
+            <p>Real-world incidents often happen because technical defenses and user behavior interact. This system models both dimensions instead of treating them separately.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Does the application permanently store user data?</h3>
+            <p>No. Input values are processed for prediction and the current result is kept only in session memory for the active user flow.</p>
+        </div>
+        <div class="faq-item">
+            <h3>Can the model be retrained?</h3>
+            <p>Yes. The project includes a training script that rebuilds the model from the Excel dataset and saves a fresh `cyber_model.pkl` file.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

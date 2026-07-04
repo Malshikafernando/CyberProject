@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section page-section reveal">
+    <div class="section-header">
+        <h1>Research & Methodology</h1>
+        <p>This page summarizes the academic and technical thinking behind the system, from problem definition to trained model deployment.</p>
+    </div>
+
+    <div class="research-grid">
+        <article class="research-card">
+            <h2>Problem Statement</h2>
+            <p>Cyber threats continue to rise while many users and organizations still lack a quick, structured way to estimate their current exposure. This project addresses that gap using data-driven risk classification.</p>
+        </article>
+        <article class="research-card">
+            <h2>Objectives</h2>
+            <ul>
+                <li>Predict risk level using security and awareness indicators.</li>
+                <li>Provide actionable recommendations after prediction.</li>
+                <li>Promote cybersecurity awareness through supporting content.</li>
+            </ul>
+        </article>
+    </div>
+
+    <div class="methodology-card methodology-flow-card">
+        <div class="methodology-header">
+            <div>
+                <span class="method-tag">Animated Methodology Flow</span>
+                <h2>Machine Learning Selection Path</h2>
+                <p>The animation below shows the broader machine learning landscape and highlights the exact path chosen for this project. Our risk predictor follows a supervised classification route and uses Random Forest as the final algorithm for prediction.</p>
+            </div>
+            <div class="method-legend">
+                <span><i class="legend-dot chosen-dot"></i> Highlighted = chosen path for this project</span>
+                <span><i class="legend-dot neutral-dot"></i> Dimmed = alternative branches</span>
+            </div>
+        </div>
+
+        <div class="ml-flow">
+            <div class="flow-row flow-row-top">
+                <div class="flow-node chosen root-node">Machine Learning</div>
+            </div>
+
+            <div class="flow-row connector-row">
+                <div class="flow-split split-root">
+                    <span class="branch-line chosen-branch branch-left"></span>
+                    <span class="branch-line neutral-branch branch-right"></span>
+                </div>
+            </div>
+
+            <div class="flow-row flow-row-two">
+                <div class="flow-node chosen">Supervised Learning</div>
+                <div class="flow-node neutral">Unsupervised Learning</div>
+            </div>
+
+            <div class="flow-row connector-row">
+                <div class="flow-split split-supervised">
+                    <span class="branch-line chosen-branch branch-left"></span>
+                    <span class="branch-line neutral-branch branch-right"></span>
+                </div>
+                <div class="flow-stem neutral-stem"></div>
+            </div>
+
+            <div class="flow-row flow-row-three">
+                <div class="flow-node chosen">Classification</div>
+                <div class="flow-node neutral">Regression</div>
+                <div class="flow-node neutral">Reinforcement Learning</div>
+            </div>
+
+            <div class="flow-row connector-row">
+                <div class="flow-split split-classification">
+                    <span class="branch-line chosen-branch branch-left"></span>
+                    <span class="branch-line chosen-branch branch-right"></span>
+                </div>
+            </div>
+
+            <div class="flow-row flow-row-four">
+                <div class="flow-node neutral alt-choice">Decision Tree</div>
+                <div class="flow-node chosen selected-model">Random Forest</div>
+            </div>
+
+            <div class="flow-row connector-row">
+                <div class="flow-split split-random-forest">
+                    <span class="branch-line neutral-branch branch-left soft-link"></span>
+                    <span class="flow-straight chosen-stem"></span>
+                </div>
+            </div>
+
+            <div class="flow-row flow-row-five">
+                <div class="flow-node chosen wide-node">Feature Selection</div>
+            </div>
+
+            <div class="flow-row connector-row">
+                <div class="flow-stem chosen-stem tall-stem"></div>
+            </div>
+
+            <div class="flow-row flow-row-six">
+                <div class="flow-node chosen wide-node">Model Training</div>
+            </div>
+
+            <div class="flow-row connector-row">
+                <div class="flow-stem chosen-stem medium-stem"></div>
+            </div>
+
+            <div class="flow-row flow-row-seven">
+                <div class="flow-node chosen wide-node final-node">Risk Prediction: Low / Medium / High</div>
+            </div>
+        </div>
+
+        <div class="methodology-notes">
+            <div class="list-card method-note">
+                <h3>Why this branch was selected</h3>
+                <ul>
+                    <li>The output of this project is categorical, so classification is more suitable than regression.</li>
+                    <li>Random Forest handles tabular security data well and is robust against overfitting.</li>
+                    <li>The selected path supports explainable decision-making for project demonstration.</li>
+                </ul>
+            </div>
+            <div class="list-card method-note">
+                <h3>Final workflow used in this project</h3>
+                <ul>
+                    <li>Collect cybersecurity dataset features from structured records.</li>
+                    <li>Choose the core model inputs used by the predictor.</li>
+                    <li>Train the Random Forest classifier on labeled cybersecurity risk data.</li>
+                    <li>Predict low, medium, or high risk levels inside the Flask application.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="research-grid">
+        <article class="research-card">
+            <h2>Why Random Forest?</h2>
+            <p>Random Forest is robust on mixed numerical features, reduces overfitting through ensemble learning, and remains easier to explain than many black-box alternatives.</p>
+        </article>
+        <article class="research-card">
+            <h2>Evaluation Snapshot</h2>
+            <p>The current rebuilt model was trained on 5,000 records and achieved approximately 89.1% accuracy on the holdout split.</p>
+        </article>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section page-section contact-section reveal">
+    <div class="section-header">
+        <h1>Contact</h1>
+        <p>Use this page for project inquiries, supervisor feedback, or demonstration-related communication.</p>
+    </div>
+
+    <div class="contact-grid">
+        <form class="contact-form" action="{{ url_for('submit_contact') }}" method="post">
+            <label>Name</label>
+            <input type="text" name="name" placeholder="Your name" />
+            <label>Email</label>
+            <input type="email" name="email" placeholder="yourname@example.com" required />
+            <label>Message</label>
+            <textarea name="message" rows="6" placeholder="Write your question, feedback, or request here." required></textarea>
+            <button type="submit" class="primary-button">Send Message</button>
+        </form>
+
+        <div class="contact-card">
+            <h2>Project Contact</h2>
+            <p><strong>Email:</strong> support@cyberriskproject.com</p>
+            <p><strong>Purpose:</strong> Final year project demonstration and cybersecurity awareness support.</p>
+            <p><strong>Response focus:</strong> Prediction workflow, methodology, and system improvement suggestions.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

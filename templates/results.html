@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section page-section result-section reveal">
+    <div class="mini-hero mini-hero-result">
+        <div class="mini-hero-copy">
+            <span class="eyebrow">Prediction Outcome</span>
+            <h1>Risk Assessment Results</h1>
+            <p>The result page now follows naturally after the assessment, so it no longer needs a separate navigation tab.</p>
+        </div>
+        <div class="mini-hero-visual">
+            <div class="result-signal {{ color }}-signal"></div>
+            <div class="mini-shield result-shield">
+                <div class="mini-shield-core"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <p>The predicted class below reflects the combined effect of your security controls, awareness indicators, and operational practices.</p>
+    </div>
+
+    <div class="result-card {{ color }}-card">
+        <span class="result-label">Predicted Risk Level</span>
+        <h2>{{ risk_level }}</h2>
+        <p>{{ explanation }}</p>
+        <div class="result-badges">
+            <span>Model-driven output</span>
+            <span>Real-time assessment</span>
+            <span>Awareness-focused guidance</span>
+        </div>
+    </div>
+
+    <div class="recommendation-card">
+        <h3>Recommended Action</h3>
+        <p>{{ recommendation }}</p>
+        <div class="result-actions">
+            <a href="{{ url_for('download_report') }}" class="secondary-button">Download Report</a>
+            <a href="{{ url_for('predict_page') }}#assessment-form" class="primary-button">Run Another Test</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

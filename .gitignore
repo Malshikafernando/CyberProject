@@ -1,0 +1,11 @@
+.venv/
+.vscode/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+server.out.log
+server.err.log
+flask-template/
+flask-template-1/

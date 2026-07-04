@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="hero reveal">
+    <div class="hero-copy">
+        <span class="eyebrow">Final Year Research · Sri Lanka Context</span>
+        <h1>Measure cyber risk <span class="accent-text">before</span> it becomes an incident.</h1>
+        <p>CyberRisk Compass predicts an organization's cybersecurity risk level using machine learning, security controls, and human awareness signals through a calm, research-focused interface built for final year project presentation.</p>
+        <div class="hero-actions">
+            <a class="cta-button" href="{{ url_for('predict_page') }}">Start Risk Assessment</a>
+            <a class="secondary-button" href="{{ url_for('research') }}">View Methodology</a>
+        </div>
+        <div class="hero-metrics">
+            <div class="metric-card">
+                <span class="metric-label">Model Accuracy</span>
+                <strong>89.1%</strong>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Risk Indicators</span>
+                <strong>10 measured signals</strong>
+            </div>
+            <div class="metric-card">
+                <span class="metric-label">Risk Levels</span>
+                <strong>Low / Medium / High</strong>
+            </div>
+        </div>
+        <div class="framework-strip">
+            <span>NIST CSF</span>
+            <span>ISO/IEC 27001</span>
+            <span>OWASP Top 10</span>
+            <span>CIS Controls</span>
+            <span>Sri Lanka CERT</span>
+        </div>
+    </div>
+    <div class="hero-visual">
+        <div class="hero-stage hero-stage-photo">
+            <img
+                class="hero-photo"
+                src="{{ url_for('static', filename='images/hero-realworld-cyber.png') }}"
+                alt="Cybersecurity analyst reviewing risk indicators with a central security shield and connected enterprise defense signals"
+            />
+            <div class="hero-photo-overlay"></div>
+            <span class="status-chip chip-top-left">MFA Enabled</span>
+            <span class="status-chip chip-top-right">Firewall Active</span>
+            <span class="status-chip chip-bottom-left">Awareness 87%</span>
+            <span class="status-chip chip-bottom-right">Monitoring 24/7</span>
+        </div>
+    </div>
+</section>
+
+<section class="section overview-panel reveal">
+    <div class="section-header">
+        <h1>Research Overview</h1>
+        <p>This interface follows the same calm, structured direction as your reference site: clear problem framing, explainable machine learning, and a presentation-friendly narrative flow.</p>
+    </div>
+
+    <div class="section-grid">
+        <article class="feature-card">
+            <h3>The Problem</h3>
+            <p>Many organizations still respond to phishing, ransomware, and data breaches only after damage has already occurred. Localized risk models for Sri Lankan organizations are limited, especially those that combine both technical and awareness-related indicators.</p>
+        </article>
+        <article class="feature-card">
+            <h3>Our Solution</h3>
+            <p>This project provides a structured web application that accepts operational security inputs, classifies them into a risk level with a Random Forest model, and returns practical next-step recommendations through an explainable interface.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section feature-grid reveal">
+    <article class="feature-card accent-card">
+        <h3>Security Controls</h3>
+        <p>Measures firewall posture, MFA usage, encryption coverage, password policy strength, backup frequency, and monitoring readiness.</p>
+    </article>
+    <article class="feature-card">
+        <h3>Human Awareness</h3>
+        <p>Captures employee training, phishing test performance, and incident history to reflect the human side of cyber risk.</p>
+    </article>
+    <article class="feature-card">
+        <h3>Explainable ML</h3>
+        <p>Uses a Random Forest classifier to generate a traceable low, medium, or high risk output with practical recommendations.</p>
+    </article>
+</section>
+
+<section class="section timeline-panel reveal">
+    <div class="section-header">
+        <h1>How It Works</h1>
+        <p>A step-by-step flow designed for project presentations, demonstrations, and report walkthroughs.</p>
+    </div>
+
+    <div class="timeline-grid">
+        <article class="timeline-step">
+            <span>01</span>
+            <h3>Collect Inputs</h3>
+            <p>Collect technical controls and human awareness indicators through a short guided assessment form.</p>
+        </article>
+        <article class="timeline-step">
+            <span>02</span>
+            <h3>Preprocess Data</h3>
+            <p>Normalize and validate the input values against the expected trained feature structure.</p>
+        </article>
+        <article class="timeline-step">
+            <span>03</span>
+            <h3>ML Prediction</h3>
+            <p>The Random Forest classifier maps the feature vector into a low, medium, or high cybersecurity risk class.</p>
+        </article>
+        <article class="timeline-step">
+            <span>04</span>
+            <h3>Explain & Recommend</h3>
+            <p>Display the verdict with supporting explanation, guidance, and awareness-oriented follow-up actions.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section reveal">
+    <div class="section-header">
+        <h1>Ready To Measure Your Risk?</h1>
+        <p>Start the assessment and generate a risk verdict in a few minutes using the same clean presentation style as the reference interface.</p>
+    </div>
+    <div class="callout-card">
+        <div>
+            <span class="metric-label">Start assessment</span>
+            <h3>Get a clear, explainable cyber risk verdict</h3>
+            <p>Use the prediction form to see how security controls and awareness levels affect the final classification.</p>
+        </div>
+        <a class="cta-button" href="{{ url_for('predict_page') }}">Try The Assessment</a>
+    </div>
+</section>
+{% endblock %}

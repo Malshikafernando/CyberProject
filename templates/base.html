@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title }} | Cybersecurity Risk Prediction System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="page-glow page-glow-left"></div>
+    <div class="page-glow page-glow-right"></div>
+
+    <div class="site-shell">
+        <header class="site-header">
+            <a class="brand-link" href="{{ url_for('home') }}">
+                <span class="brand-mark">CR</span>
+                <span class="brand-block">
+                    <span class="brand">CyberRisk Compass</span>
+                    <span class="brand-kicker">Final Year Research</span>
+                </span>
+            </a>
+            <nav class="site-nav">
+                <a href="{{ url_for('home') }}" class="{{ 'active' if active == 'home' else '' }}">Home</a>
+                <a href="{{ url_for('predict_page') }}" class="{{ 'active' if active == 'predict' else '' }}">Predict Risk</a>
+                <a href="{{ url_for('insights') }}" class="{{ 'active' if active == 'insights' else '' }}">Insights</a>
+                <a href="{{ url_for('research') }}" class="{{ 'active' if active == 'research' else '' }}">Research</a>
+                <a href="{{ url_for('awareness') }}" class="{{ 'active' if active == 'awareness' else '' }}">Awareness Hub</a>
+                <a href="{{ url_for('faq') }}" class="{{ 'active' if active == 'faq' else '' }}">FAQ</a>
+                <a href="{{ url_for('contact') }}" class="{{ 'active' if active == 'contact' else '' }}">Contact</a>
+            </nav>
+            <a class="nav-cta" href="{{ url_for('predict_page') }}">Start Assessment</a>
+        </header>
+
+        <main class="site-main">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="flash-container">
+                {% for message in messages %}
+                <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="site-footer">
+            <div>
+                <strong>CyberRisk Compass</strong>
+                <p>A final year research project focused on cybersecurity risk prediction for Sri Lankan organizations.</p>
+            </div>
+            <p>Horizon Campus style showcase interface for research, prediction, and awareness.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

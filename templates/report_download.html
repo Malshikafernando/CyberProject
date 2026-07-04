@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cyber Risk Report</title>
+    <style>
+        :root {
+            --bg: #0b1016;
+            --panel: #111923;
+            --panel-soft: #17212c;
+            --text: #f3f6fb;
+            --muted: #97a8ba;
+            --border: rgba(255, 255, 255, 0.08);
+            --green: #24d17e;
+            --yellow: #ffbf47;
+            --red: #ff6b6b;
+            --blue: #5ac8ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(90, 200, 255, 0.12), transparent 24%),
+                radial-gradient(circle at top left, rgba(36, 209, 126, 0.12), transparent 26%),
+                linear-gradient(180deg, #0b1016 0%, #0f141c 100%);
+            color: var(--text);
+        }
+
+        .report-shell {
+            width: min(1180px, calc(100% - 48px));
+            margin: 28px auto;
+            padding-bottom: 28px;
+        }
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 24px;
+            padding: 28px;
+            border-radius: 28px;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.06));
+            border: 1px solid var(--border);
+        }
+
+        .eyebrow {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 999px;
+            color: var(--blue);
+            background: rgba(90, 200, 255, 0.10);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-weight: 700;
+        }
+
+        h1, h2, h3, h4, p {
+            margin-top: 0;
+        }
+
+        h1 {
+            margin: 16px 0 14px;
+            font-size: 44px;
+            line-height: 1;
+        }
+
+        .hero p {
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(120px, 1fr));
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        .stat {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+        }
+
+        .stat strong {
+            display: block;
+            margin-top: 8px;
+            font-size: 28px;
+        }
+
+        .visual {
+            position: relative;
+            min-height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .halo {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            background: radial-gradient(circle, {{ badge.accent }}55, transparent 60%);
+            filter: blur(10px);
+        }
+
+        .shield {
+            position: relative;
+            width: 190px;
+            height: 210px;
+            clip-path: polygon(50% 2%, 86% 14%, 84% 58%, 50% 96%, 16% 58%, 14% 14%);
+            background: linear-gradient(180deg, #13212c 0%, #091018 100%);
+            border: 3px solid {{ badge.accent }};
+            box-shadow: 0 0 34px {{ badge.accent }}44;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shield-core {
+            width: 82px;
+            height: 82px;
+            border-radius: 24px;
+            background: radial-gradient(circle at center, {{ badge.accent }}aa, transparent 74%);
+            box-shadow: inset 0 0 22px {{ badge.accent }}66;
+        }
+
+        .floating-pill {
+            position: absolute;
+            padding: 12px 16px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(20, 28, 39, 0.92);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .pill-a { top: 36px; left: 14px; }
+        .pill-b { top: 84px; right: 16px; }
+        .pill-c { bottom: 62px; left: 22px; }
+        .pill-d { bottom: 24px; right: 30px; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .card {
+            padding: 24px;
+            border-radius: 24px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+        }
+
+        .panel-high { box-shadow: inset 0 0 0 1px rgba(255, 107, 107, 0.18); }
+        .panel-medium { box-shadow: inset 0 0 0 1px rgba(255, 191, 71, 0.18); }
+        .panel-low { box-shadow: inset 0 0 0 1px rgba(36, 209, 126, 0.18); }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: {{ badge.accent }};
+        }
+
+        .bars {
+            display: grid;
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        .bar-row span {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .track {
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+        }
+
+        .fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(90deg, {{ badge.accent }}, #5ac8ff);
+        }
+
+        .section-grid {
+            display: grid;
+            gap: 18px;
+            margin-top: 24px;
+        }
+
+        .list-card {
+            padding: 20px;
+            border-radius: 20px;
+            background: var(--panel-soft);
+            border: 1px solid var(--border);
+        }
+
+        ul {
+            margin: 12px 0 0;
+            padding-left: 22px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .input-grid {
+            display: grid;
+            gap: 16px;
+        }
+
+        .input-section {
+            padding: 18px;
+            border-radius: 18px;
+            background: var(--panel-soft);
+            border: 1px solid var(--border);
+        }
+
+        .input-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .input-item:last-child {
+            border-bottom: none;
+        }
+
+        .input-item span:first-child {
+            color: var(--muted);
+        }
+
+        .input-item strong {
+            color: var(--text);
+        }
+
+        .footer-note {
+            margin-top: 24px;
+            padding: 18px 22px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .hero,
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .report-shell {
+                width: min(100% - 24px, 1180px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-shell">
+        <section class="hero">
+            <div>
+                <span class="eyebrow">Cyber Risk Assessment Report</span>
+                <h1>{{ badge.label }}</h1>
+                <p>{{ explanation }}</p>
+
+                <div class="hero-grid">
+                    <div class="stat">
+                        <div>Risk Level</div>
+                        <strong>{{ risk_level }}</strong>
+                    </div>
+                    <div class="stat">
+                        <div>Generated</div>
+                        <strong style="font-size:18px;">{{ generated_at }}</strong>
+                    </div>
+                    <div class="stat">
+                        <div>Model Output</div>
+                        <strong style="font-size:18px;">Explainable Verdict</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="visual">
+                <div class="halo"></div>
+                <div class="floating-pill pill-a">Security Controls {{ bars["Security Controls"] }}%</div>
+                <div class="floating-pill pill-b">Human Awareness {{ bars["Human Awareness"] }}%</div>
+                <div class="floating-pill pill-c">Monitoring {{ bars["Monitoring Readiness"] }}%</div>
+                <div class="floating-pill pill-d">{{ badge.label }}</div>
+                <div class="shield">
+                    <div class="shield-core"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="layout">
+            <div>
+                <div class="card {{ badge.panel }}">
+                    <div class="badge"><span class="dot"></span> Executive Summary</div>
+                    <p style="margin-top:16px; color: var(--muted); line-height:1.8;">
+                        {{ recommendation }}
+                    </p>
+
+                    <div class="bars">
+                        {% for label, value in bars.items() %}
+                        <div class="bar-row">
+                            <span><strong>{{ label }}</strong><strong>{{ value }}%</strong></span>
+                            <div class="track"><div class="fill" style="width: {{ value }}%;"></div></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="section-grid">
+                    <div class="list-card">
+                        <h3>Key Strengths</h3>
+                        <ul>
+                            {% for item in strengths %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="list-card">
+                        <h3>Primary Concerns</h3>
+                        <ul>
+                            {% for item in concerns %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="list-card">
+                        <h3>Priority Recommendations</h3>
+                        <ul>
+                            {% for item in recommendations %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-grid">
+                {% for section in input_sections %}
+                <div class="input-section">
+                    <h3>{{ section.title }}</h3>
+                    {% for label, value in section["items"] %}
+                    <div class="input-item">
+                        <span>{{ label }}</span>
+                        <strong>{{ value }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="footer-note">
+            Generated by CyberRisk Compass. This report is intended as a project-based decision support summary and should be reviewed together with organizational security context, policy requirements, and expert validation where needed.
+        </div>
+    </div>
+</body>
+</html>

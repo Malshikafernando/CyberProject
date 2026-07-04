@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section page-section reveal">
+    <div class="mini-hero">
+        <div class="mini-hero-copy">
+            <span class="eyebrow">Assessment Workspace</span>
+            <h1>Predict Cybersecurity Risk</h1>
+            <p>Use the form below to simulate an organization's security posture and generate a model-based risk verdict.</p>
+        </div>
+        <div class="mini-hero-visual">
+            <div class="pulse-orbit orbit-one"></div>
+            <div class="pulse-orbit orbit-two"></div>
+            <div class="mini-shield">
+                <div class="mini-shield-core"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <p>Start with organization context, then complete the technical and awareness indicators. When you return for another test, your previous answers remain available for quick comparison.</p>
+    </div>
+
+    <div class="form-layout">
+        <form class="risk-form" id="assessment-form" action="{{ url_for('predict') }}" method="post">
+            <div class="form-group">
+                <h2>Assessment Profile</h2>
+                <p class="group-intro">These additional questions make the assessment feel more complete and help document the context of the prediction, even though the machine learning score still uses the core 10 model features.</p>
+
+                <label>Organization Name</label>
+                <input type="text" name="organization_name" value="{{ form_defaults.organization_name }}" placeholder="Example: ABC Finance (Pvt) Ltd" />
+
+                <label>Industry Sector</label>
+                <select name="industry_sector">
+                    <option value="Technology" {{ 'selected' if form_defaults.industry_sector == 'Technology' else '' }}>Technology</option>
+                    <option value="Finance" {{ 'selected' if form_defaults.industry_sector == 'Finance' else '' }}>Finance</option>
+                    <option value="Healthcare" {{ 'selected' if form_defaults.industry_sector == 'Healthcare' else '' }}>Healthcare</option>
+                    <option value="Education" {{ 'selected' if form_defaults.industry_sector == 'Education' else '' }}>Education</option>
+                    <option value="Retail" {{ 'selected' if form_defaults.industry_sector == 'Retail' else '' }}>Retail</option>
+                    <option value="Government" {{ 'selected' if form_defaults.industry_sector == 'Government' else '' }}>Government</option>
+                    <option value="Other" {{ 'selected' if form_defaults.industry_sector == 'Other' else '' }}>Other</option>
+                </select>
+
+                <label>Organization Size</label>
+                <select name="organization_size">
+                    <option value="Small (1-50 employees)" {{ 'selected' if form_defaults.organization_size == 'Small (1-50 employees)' else '' }}>Small (1-50 employees)</option>
+                    <option value="Medium (51-250 employees)" {{ 'selected' if form_defaults.organization_size == 'Medium (51-250 employees)' else '' }}>Medium (51-250 employees)</option>
+                    <option value="Large (251+ employees)" {{ 'selected' if form_defaults.organization_size == 'Large (251+ employees)' else '' }}>Large (251+ employees)</option>
+                </select>
+
+                <label>Assessment Owner</label>
+                <input type="text" name="assessment_owner" value="{{ form_defaults.assessment_owner }}" placeholder="Person completing this assessment" />
+
+                <label>Remote Workforce Level</label>
+                <select name="remote_workforce_level">
+                    <option value="Low" {{ 'selected' if form_defaults.remote_workforce_level == 'Low' else '' }}>Low</option>
+                    <option value="Moderate" {{ 'selected' if form_defaults.remote_workforce_level == 'Moderate' else '' }}>Moderate</option>
+                    <option value="High" {{ 'selected' if form_defaults.remote_workforce_level == 'High' else '' }}>High</option>
+                </select>
+
+                <label>Critical Data Exposure</label>
+                <select name="critical_data_exposure">
+                    <option value="Low" {{ 'selected' if form_defaults.critical_data_exposure == 'Low' else '' }}>Low</option>
+                    <option value="Medium" {{ 'selected' if form_defaults.critical_data_exposure == 'Medium' else '' }}>Medium</option>
+                    <option value="High" {{ 'selected' if form_defaults.critical_data_exposure == 'High' else '' }}>High</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <h2>Security Controls</h2>
+                <p class="group-intro">These inputs describe the baseline protective controls currently in place.</p>
+                <label>Firewall Status</label>
+                <select name="firewall_status" required>
+                    <option value="Yes" {{ 'selected' if form_defaults.firewall_status == 'Yes' else '' }}>Yes</option>
+                    <option value="No" {{ 'selected' if form_defaults.firewall_status == 'No' else '' }}>No</option>
+                </select>
+                <label>MFA Usage</label>
+                <select name="mfa_usage" required>
+                    <option value="Yes" {{ 'selected' if form_defaults.mfa_usage == 'Yes' else '' }}>Yes</option>
+                    <option value="No" {{ 'selected' if form_defaults.mfa_usage == 'No' else '' }}>No</option>
+                </select>
+                <label>Encryption Usage</label>
+                <select name="encryption_usage" required>
+                    <option value="Yes" {{ 'selected' if form_defaults.encryption_usage == 'Yes' else '' }}>Yes</option>
+                    <option value="No" {{ 'selected' if form_defaults.encryption_usage == 'No' else '' }}>No</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <h2>Human Awareness</h2>
+                <p class="group-intro">Training and phishing readiness often influence whether users resist or enable attacks.</p>
+                <label>Employee Training Score (0-100)</label>
+                <input type="number" name="employee_training_score" min="0" max="100" value="{{ form_defaults.employee_training_score }}" required />
+                <label>Phishing Test Score (0-100)</label>
+                <input type="number" name="phishing_test_score" min="0" max="100" value="{{ form_defaults.phishing_test_score }}" required />
+            </div>
+
+            <div class="form-group">
+                <h2>Vulnerabilities & Incidents</h2>
+                <p class="group-intro">Higher vulnerabilities and repeated incidents usually indicate a wider attack surface.</p>
+                <label>Unpatched Vulnerabilities</label>
+                <input type="number" name="unpatched_vulnerabilities" min="0" value="{{ form_defaults.unpatched_vulnerabilities }}" required />
+                <label>Incident History Count</label>
+                <input type="number" name="incident_history_count" min="0" value="{{ form_defaults.incident_history_count }}" required />
+            </div>
+
+            <div class="form-group">
+                <h2>Policies & Monitoring</h2>
+                <p class="group-intro">These values show how disciplined and observable the environment is over time.</p>
+                <label>Password Policy Strength (1-10)</label>
+                <input type="number" name="password_policy_strength" min="1" max="10" value="{{ form_defaults.password_policy_strength }}" required />
+                <label>Backup Frequency (days)</label>
+                <input type="number" name="backup_frequency_days" min="0" value="{{ form_defaults.backup_frequency_days }}" required />
+                <label>Network Monitoring Level (1-10)</label>
+                <input type="number" name="network_monitoring_level" min="1" max="10" value="{{ form_defaults.network_monitoring_level }}" required />
+            </div>
+
+            <div class="form-actions">
+                <button type="button" id="demo-fill" class="secondary-button">Auto-fill Demo Data</button>
+                <button type="submit" class="primary-button">Predict Risk Level 1</button>
+            </div>
+        </form>
+
+        <aside class="side-panel">
+            <h2>Assessment Guidance</h2>
+            <ul class="side-list">
+                <li>Use realistic values from your current environment rather than ideal targets.</li>
+                <li>Complete the profile section first so the report feels more professional and traceable.</li>
+                <li>Low training and phishing scores often increase risk even if technical controls exist.</li>
+                <li>Frequent backups and strong monitoring can reduce operational exposure.</li>
+                <li>Use the demo button during presentations when you need a quick walkthrough.</li>
+            </ul>
+
+            <div class="mini-note">
+                <strong>Tip for viva/demo:</strong>
+                <p>Run the form multiple times with different organization profiles. Because the previous values stay in the form, it becomes easier to compare scenarios and explain how the result changes.</p>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

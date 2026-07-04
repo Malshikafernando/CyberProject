@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="section page-section reveal">
+    <div class="section-header">
+        <h1>Insights</h1>
+        <p>These visuals help explain which factors contribute most strongly to cyber risk and how the dataset is distributed across prediction classes.</p>
+    </div>
+
+    <div class="insight-summary">
+        <article class="feature-card">
+            <h3>What the charts show</h3>
+            <p>Feature importance highlights the strongest contributors to prediction, while distribution helps explain whether high, medium, and low risk cases are balanced.</p>
+        </article>
+        <article class="feature-card">
+            <h3>Why this matters</h3>
+            <p>During a project demonstration, visual evidence makes the machine learning workflow easier to defend and discuss with non-technical audiences.</p>
+        </article>
+    </div>
+
+    <div class="chart-grid">
+        <div class="chart-card">
+            <h3>Feature Importance</h3>
+            <canvas id="featureChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Risk Distribution</h3>
+            <canvas id="distributionChart"></canvas>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const featureData = {
+    labels: [
+        'Firewall', 'MFA', 'Training', 'Vulnerabilities', 'Password Policy',
+        'Incidents', 'Encryption', 'Backup', 'Monitoring', 'Phishing'
+    ],
+    values: [18, 15, 14, 11, 7, 8, 12, 3, 2, 10]
+};
+
+const distributionData = {
+    labels: ['Low', 'Medium', 'High'],
+    values: [15, 26, 59]
+};
+
+function renderInsights() {
+    const featureCtx = document.getElementById('featureChart');
+    if (featureCtx) {
+        new Chart(featureCtx, {
+            type: 'bar',
+            data: {
+                labels: featureData.labels,
+                datasets: [{
+                    label: 'Impact Score',
+                    data: featureData.values,
+                    backgroundColor: ['#155eef', '#2563eb', '#2b7fff', '#4490ff', '#5aa0ff', '#79b4ff', '#9fc8ff', '#bdd9ff', '#d8e8ff', '#8a5cf6'],
+                    borderRadius: 10,
+                }]
+            },
+            options: {
+                plugins: {legend: {display: false}},
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {stepSize: 5}
+                    }
+                }
+            }
+        });
+    }
+
+    const distributionCtx = document.getElementById('distributionChart');
+    if (distributionCtx) {
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: distributionData.labels,
+                datasets: [{
+                    data: distributionData.values,
+                    backgroundColor: ['#3aa76d', '#f2b339', '#e2574c'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                plugins: {legend: {position: 'bottom'}}
+            }
+        });
+    }
+}
+
+window.addEventListener('DOMContentLoaded', renderInsights);
+</script>
+{% endblock %}
