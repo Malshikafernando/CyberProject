@@ -6,7 +6,7 @@ from pathlib import Path
 import joblib
 from flask import Flask, flash, redirect, render_template, request, send_file, session, url_for
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="public", static_url_path="/static")
 app.secret_key = os.getenv("SECRET_KEY", "cyber_risk_secret_2026")
 
 BASE_DIR = Path(__file__).parent

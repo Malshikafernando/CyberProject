@@ -22,6 +22,20 @@ Then open `http://127.0.0.1:5000`.
 
 The easiest way to share the frontend with another group member is to deploy it on Render and send them the public link.
 
+### Fastest Option: Vercel
+
+This project is also prepared for Vercel.
+
+1. Go to Vercel and import `Malshikafernando/CyberProject`.
+2. Keep the default detected settings.
+3. Deploy the project.
+
+Notes:
+
+- Vercel will use the Flask app from `app.py`.
+- Static files are served from the `public/` folder.
+- Python version is pinned with `.python-version`.
+
 ### Option 1: Render
 
 1. Upload this project to a GitHub repository.
