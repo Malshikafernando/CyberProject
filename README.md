@@ -1,6 +1,6 @@
-# Cybersecurity Risk Prediction and Awareness System
+# CyberProject
 
-This is the main Flask application for the final year project. It predicts cybersecurity risk levels from user inputs, shows awareness content, and provides supporting research and visual insights.
+Cybersecurity Risk Prediction and Awareness System for the final year project. This Flask application predicts cybersecurity risk levels from user inputs, shows awareness content, and provides supporting research and visual insights.
 
 ## Features
 
