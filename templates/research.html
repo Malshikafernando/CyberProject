@@ -27,7 +27,7 @@
             <div>
                 <span class="method-tag">Animated Methodology Flow</span>
                 <h2>Machine Learning Selection Path</h2>
-                <p>The animation below shows the broader machine learning landscape and highlights the exact path chosen for this project. Our risk predictor follows a supervised classification route and uses Random Forest as the final algorithm for prediction.</p>
+                <p>The predictor follows a supervised classification workflow. Logistic Regression was selected because it achieved the strongest macro-F1 score when validation kept entire organizations separate.</p>
             </div>
             <div class="method-legend">
                 <span><i class="legend-dot chosen-dot"></i> Highlighted = chosen path for this project</span>
@@ -75,7 +75,7 @@
 
             <div class="flow-row flow-row-four">
                 <div class="flow-node neutral alt-choice">Decision Tree</div>
-                <div class="flow-node chosen selected-model">Random Forest</div>
+                <div class="flow-node chosen selected-model">Logistic Regression</div>
             </div>
 
             <div class="flow-row connector-row">
@@ -111,7 +111,7 @@
                 <h3>Why this branch was selected</h3>
                 <ul>
                     <li>The output of this project is categorical, so classification is more suitable than regression.</li>
-                    <li>Random Forest handles tabular security data well and is robust against overfitting.</li>
+                    <li>Logistic Regression achieved the strongest organization-separated macro-F1 score.</li>
                     <li>The selected path supports explainable decision-making for project demonstration.</li>
                 </ul>
             </div>
@@ -120,7 +120,7 @@
                 <ul>
                     <li>Collect cybersecurity dataset features from structured records.</li>
                     <li>Choose the core model inputs used by the predictor.</li>
-                    <li>Train the Random Forest classifier on labeled cybersecurity risk data.</li>
+                    <li>Compare candidate classifiers using organization-separated cross-validation.</li>
                     <li>Predict low, medium, or high risk levels inside the Flask application.</li>
                 </ul>
             </div>
@@ -129,12 +129,12 @@
 
     <div class="research-grid">
         <article class="research-card">
-            <h2>Why Random Forest?</h2>
-            <p>Random Forest is robust on mixed numerical features, reduces overfitting through ensemble learning, and remains easier to explain than many black-box alternatives.</p>
+            <h2>Why Logistic Regression?</h2>
+            <p>Logistic Regression produced the highest macro-F1 score across unseen organizations while remaining transparent and efficient for probability-based classification.</p>
         </article>
         <article class="research-card">
             <h2>Evaluation Snapshot</h2>
-            <p>The current rebuilt model was trained on 5,000 records and achieved approximately 89.1% accuracy on the holdout split.</p>
+            <p>The final model was trained on 5,500 synthetic records and achieved 87.7% accuracy and 87.6% macro-F1 on a holdout containing 44 previously unseen organizations.</p>
         </article>
     </div>
 </section>

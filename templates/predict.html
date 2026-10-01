@@ -1,141 +1,168 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<section class="section page-section reveal">
-    <div class="mini-hero">
-        <div class="mini-hero-copy">
-            <span class="eyebrow">Assessment Workspace</span>
-            <h1>Predict Cybersecurity Risk</h1>
-            <p>Use the form below to simulate an organization's security posture and generate a model-based risk verdict.</p>
+<section class="assessment-page">
+    <div class="site-container">
+        <div class="assessment-intro">
+            <div>
+                <span class="eyebrow">Guided assessment</span>
+                <h1>Assess role-based cybersecurity risk</h1>
+                <p>Complete the assessment to identify the employee's risk level and receive role-specific security recommendations.</p>
+            </div>
+            <div class="assessment-time"><span aria-hidden="true">◷</span> About 8–10 minutes</div>
         </div>
-        <div class="mini-hero-visual">
-            <div class="pulse-orbit orbit-one"></div>
-            <div class="pulse-orbit orbit-two"></div>
-            <div class="mini-shield">
-                <div class="mini-shield-core"></div>
-            </div>
+
+        <div class="assessment-shell">
+            <aside class="stepper-panel" aria-label="Assessment progress">
+                <div class="progress-summary">
+                    <span>Assessment progress</span>
+                    <strong><span id="current-step-number">1</span> of 6</strong>
+                </div>
+                <div class="progress-track" aria-hidden="true"><span id="progress-fill"></span></div>
+                <ol class="form-stepper">
+                    {% for group in form_groups %}
+                    <li class="{{ 'active' if loop.first else '' }}" data-step-indicator="{{ loop.index }}">
+                        <span>{{ loop.index }}</span>
+                        <div><strong>{{ group.title }}</strong><small>{{ group.fields|length }} details</small></div>
+                    </li>
+                    {% endfor %}
+                    <li data-step-indicator="6">
+                        <span>6</span>
+                        <div><strong>Review and predict</strong><small>Check your answers</small></div>
+                    </li>
+                </ol>
+                <div class="privacy-note">
+                    <strong>Your assessment stays private</strong>
+                    <p>Values are processed for this prediction and are not permanently stored.</p>
+                </div>
+            </aside>
+
+            <form class="assessment-form" id="assessment-form" action="{{ url_for('predict') }}" method="post" novalidate>
+                {% for group in form_groups %}
+                <section class="form-step {{ 'active' if loop.first else '' }}" data-step="{{ loop.index }}" aria-labelledby="step-title-{{ loop.index }}">
+                    <div class="form-step-header stage-header">
+                        <div class="stage-copy">
+                            <span>Step {{ loop.index }} of 6</span>
+                            <h2 id="step-title-{{ loop.index }}">{{ group.title }}</h2>
+                            <p>
+                            {% if loop.index == 1 %}Tell us about the organization and its operating environment.
+                            {% elif loop.index == 2 %}Define the employee's role, access, and technology exposure.
+                            {% elif loop.index == 3 %}Record the technical and operational controls currently in place.
+                            {% elif loop.index == 4 %}Describe security awareness, policy compliance, and everyday behaviour.
+                            {% else %}Add current vulnerabilities and security incidents linked to this employee or role.
+                            {% endif %}
+                            </p>
+                        </div>
+                        <div class="stage-graphic stage-graphic-{{ loop.index }}" aria-hidden="true">
+                            <span class="stage-pulse"></span>
+                            {% if loop.index == 1 %}<svg viewBox="0 0 64 64"><path d="M8 54h48M13 54V24l19-12 19 12v30M22 30h6v7h-6zm14 0h6v7h-6zM22 43h6v7h-6zm14 0h6v7h-6z"/></svg>
+                            {% elif loop.index == 2 %}<svg viewBox="0 0 64 64"><circle cx="24" cy="22" r="9"/><path d="M8 52c1-11 7-17 16-17s15 6 16 17M42 28h14v20H38V35m9-1v8m-4-4h8"/></svg>
+                            {% elif loop.index == 3 %}<svg viewBox="0 0 64 64"><path d="M32 6 52 14v15c0 14-8 24-20 30C20 53 12 43 12 29V14l20-8Z"/><path d="m22 31 7 7 14-17"/></svg>
+                            {% elif loop.index == 4 %}<svg viewBox="0 0 64 64"><circle cx="32" cy="21" r="10"/><path d="M13 54c2-14 9-22 19-22s17 8 19 22M49 12l3 3 6-7"/></svg>
+                            {% else %}<svg viewBox="0 0 64 64"><path d="M32 8 58 54H6L32 8Z"/><path d="M32 23v15m0 7v2"/></svg>{% endif %}
+                        </div>
+                    </div>
+
+                    {% if loop.index == 2 %}
+                    <div class="role-guidance" id="role-guidance" aria-live="polite">
+                        <span class="role-guidance-icon" aria-hidden="true">◎</span>
+                        <div><strong id="role-guidance-title">Role-aware assessment</strong><p id="role-guidance-copy">Select an employee role to see the security areas most relevant to that work.</p></div>
+                    </div>
+                    {% endif %}
+
+                    {% if loop.first %}
+                    <div class="optional-reference">
+                        <label for="assessment_reference">Assessment reference <span>Optional</span></label>
+                        <input id="assessment_reference" type="text" name="assessment_reference" value="{{ form_defaults.get('assessment_reference', '') }}" placeholder="e.g. HR-2026-014" />
+                        <small>Use an internal code only. This value is not used by the model.</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="field-grid">
+                        {% for field in group.fields %}
+                        <div class="field-wrap {{ 'field-wide' if field.input_kind == 'binary' else '' }}" data-field-wrapper>
+                            <div class="field-label-row">
+                                <label id="label-{{ field.name }}" for="{{ field.name }}">{{ field.label }} <span aria-label="required">*</span></label>
+                                {% if field.input_kind == 'number' %}
+                                <span class="field-unit">
+                                    {% if 'percentage' in field.name or 'rate' in field.name or 'score' in field.name %}%
+                                    {% elif 'days' in field.name %}days
+                                    {% elif 'count' in field.name or 'incidents' in field.name or 'events' in field.name %}count
+                                    {% endif %}
+                                </span>
+                                {% endif %}
+                            </div>
+                            <small class="field-help">{{ field.description }}</small>
+
+                            {% if field.input_kind == 'binary' %}
+                            <div class="binary-control" role="radiogroup" aria-labelledby="label-{{ field.name }}">
+                                {% for option in field.options %}
+                                <label>
+                                    <input type="radio" name="{{ field.name }}" value="{{ option.value }}" {{ 'checked' if form_defaults.get(field.name)|string == option.value|string else '' }} required />
+                                    <span>{{ option.label }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            {% elif field.input_kind == 'select' %}
+                            <div class="select-wrap">
+                                <select id="{{ field.name }}" name="{{ field.name }}" required>
+                                    {% for option in field.options %}
+                                    <option value="{{ option }}" {{ 'selected' if form_defaults.get(field.name) == option else '' }}>{{ option }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% else %}
+                            <div class="number-wrap">
+                                <input id="{{ field.name }}" type="number" name="{{ field.name }}" min="{{ field.minimum }}" max="{{ field.maximum }}" step="{{ field.step }}" value="{{ form_defaults.get(field.name, field.default) }}" required />
+                                {% if 'percentage' in field.name or 'rate' in field.name or 'score' in field.name %}<span>%</span>
+                                {% elif 'days' in field.name %}<span>days</span>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            <span class="field-error" aria-live="polite"></span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endfor %}
+
+                <section class="form-step review-step" data-step="6" aria-labelledby="step-title-6">
+                    <div class="form-step-header stage-header">
+                        <div class="stage-copy"><span>Step 6 of 6</span><h2 id="step-title-6">Review and predict</h2><p>Check the information below. You can return to any section before generating the prediction.</p></div>
+                        <div class="stage-graphic stage-graphic-6" aria-hidden="true"><span class="stage-pulse"></span><svg viewBox="0 0 64 64"><circle cx="28" cy="28" r="19"/><path d="m42 42 14 14M20 28l6 6 11-13"/></svg></div>
+                    </div>
+                    <div id="review-summary" class="review-summary"></div>
+                    <div class="model-notice">
+                        <strong>Before you continue</strong>
+                        <p>This academic model supports risk assessment but does not replace a professional cybersecurity audit.</p>
+                    </div>
+                </section>
+
+                <div class="form-navigation">
+                    <button type="button" class="secondary-button" id="previous-step" hidden>Previous</button>
+                    <div class="step-status" aria-live="polite" id="step-status">Organization Context</div>
+                    <button type="button" class="primary-button" id="next-step">Continue</button>
+                    <button type="submit" class="primary-button predict-button" id="predict-button" hidden>
+                        <span>Predict risk level</span><i class="button-spinner" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div class="analysis-overlay" id="analysis-overlay" aria-live="assertive" aria-hidden="true">
+                    <div class="analysis-visual" aria-hidden="true"><span></span><i></i><b></b></div>
+                    <strong>Analysing 63 security indicators</strong>
+                    <p>Calculating risk probabilities and matching recommendations…</p>
+                    <div class="analysis-steps"><span>Validating responses</span><span>Running risk model</span><span>Preparing actions</span></div>
+                </div>
+            </form>
         </div>
-    </div>
-
-    <div class="section-header">
-        <p>Start with organization context, then complete the technical and awareness indicators. When you return for another test, your previous answers remain available for quick comparison.</p>
-    </div>
-
-    <div class="form-layout">
-        <form class="risk-form" id="assessment-form" action="{{ url_for('predict') }}" method="post">
-            <div class="form-group">
-                <h2>Assessment Profile</h2>
-                <p class="group-intro">These additional questions make the assessment feel more complete and help document the context of the prediction, even though the machine learning score still uses the core 10 model features.</p>
-
-                <label>Organization Name</label>
-                <input type="text" name="organization_name" value="{{ form_defaults.organization_name }}" placeholder="Example: ABC Finance (Pvt) Ltd" />
-
-                <label>Industry Sector</label>
-                <select name="industry_sector">
-                    <option value="Technology" {{ 'selected' if form_defaults.industry_sector == 'Technology' else '' }}>Technology</option>
-                    <option value="Finance" {{ 'selected' if form_defaults.industry_sector == 'Finance' else '' }}>Finance</option>
-                    <option value="Healthcare" {{ 'selected' if form_defaults.industry_sector == 'Healthcare' else '' }}>Healthcare</option>
-                    <option value="Education" {{ 'selected' if form_defaults.industry_sector == 'Education' else '' }}>Education</option>
-                    <option value="Retail" {{ 'selected' if form_defaults.industry_sector == 'Retail' else '' }}>Retail</option>
-                    <option value="Government" {{ 'selected' if form_defaults.industry_sector == 'Government' else '' }}>Government</option>
-                    <option value="Other" {{ 'selected' if form_defaults.industry_sector == 'Other' else '' }}>Other</option>
-                </select>
-
-                <label>Organization Size</label>
-                <select name="organization_size">
-                    <option value="Small (1-50 employees)" {{ 'selected' if form_defaults.organization_size == 'Small (1-50 employees)' else '' }}>Small (1-50 employees)</option>
-                    <option value="Medium (51-250 employees)" {{ 'selected' if form_defaults.organization_size == 'Medium (51-250 employees)' else '' }}>Medium (51-250 employees)</option>
-                    <option value="Large (251+ employees)" {{ 'selected' if form_defaults.organization_size == 'Large (251+ employees)' else '' }}>Large (251+ employees)</option>
-                </select>
-
-                <label>Assessment Owner</label>
-                <input type="text" name="assessment_owner" value="{{ form_defaults.assessment_owner }}" placeholder="Person completing this assessment" />
-
-                <label>Remote Workforce Level</label>
-                <select name="remote_workforce_level">
-                    <option value="Low" {{ 'selected' if form_defaults.remote_workforce_level == 'Low' else '' }}>Low</option>
-                    <option value="Moderate" {{ 'selected' if form_defaults.remote_workforce_level == 'Moderate' else '' }}>Moderate</option>
-                    <option value="High" {{ 'selected' if form_defaults.remote_workforce_level == 'High' else '' }}>High</option>
-                </select>
-
-                <label>Critical Data Exposure</label>
-                <select name="critical_data_exposure">
-                    <option value="Low" {{ 'selected' if form_defaults.critical_data_exposure == 'Low' else '' }}>Low</option>
-                    <option value="Medium" {{ 'selected' if form_defaults.critical_data_exposure == 'Medium' else '' }}>Medium</option>
-                    <option value="High" {{ 'selected' if form_defaults.critical_data_exposure == 'High' else '' }}>High</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <h2>Security Controls</h2>
-                <p class="group-intro">These inputs describe the baseline protective controls currently in place.</p>
-                <label>Firewall Status</label>
-                <select name="firewall_status" required>
-                    <option value="Yes" {{ 'selected' if form_defaults.firewall_status == 'Yes' else '' }}>Yes</option>
-                    <option value="No" {{ 'selected' if form_defaults.firewall_status == 'No' else '' }}>No</option>
-                </select>
-                <label>MFA Usage</label>
-                <select name="mfa_usage" required>
-                    <option value="Yes" {{ 'selected' if form_defaults.mfa_usage == 'Yes' else '' }}>Yes</option>
-                    <option value="No" {{ 'selected' if form_defaults.mfa_usage == 'No' else '' }}>No</option>
-                </select>
-                <label>Encryption Usage</label>
-                <select name="encryption_usage" required>
-                    <option value="Yes" {{ 'selected' if form_defaults.encryption_usage == 'Yes' else '' }}>Yes</option>
-                    <option value="No" {{ 'selected' if form_defaults.encryption_usage == 'No' else '' }}>No</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <h2>Human Awareness</h2>
-                <p class="group-intro">Training and phishing readiness often influence whether users resist or enable attacks.</p>
-                <label>Employee Training Score (0-100)</label>
-                <input type="number" name="employee_training_score" min="0" max="100" value="{{ form_defaults.employee_training_score }}" required />
-                <label>Phishing Test Score (0-100)</label>
-                <input type="number" name="phishing_test_score" min="0" max="100" value="{{ form_defaults.phishing_test_score }}" required />
-            </div>
-
-            <div class="form-group">
-                <h2>Vulnerabilities & Incidents</h2>
-                <p class="group-intro">Higher vulnerabilities and repeated incidents usually indicate a wider attack surface.</p>
-                <label>Unpatched Vulnerabilities</label>
-                <input type="number" name="unpatched_vulnerabilities" min="0" value="{{ form_defaults.unpatched_vulnerabilities }}" required />
-                <label>Incident History Count</label>
-                <input type="number" name="incident_history_count" min="0" value="{{ form_defaults.incident_history_count }}" required />
-            </div>
-
-            <div class="form-group">
-                <h2>Policies & Monitoring</h2>
-                <p class="group-intro">These values show how disciplined and observable the environment is over time.</p>
-                <label>Password Policy Strength (1-10)</label>
-                <input type="number" name="password_policy_strength" min="1" max="10" value="{{ form_defaults.password_policy_strength }}" required />
-                <label>Backup Frequency (days)</label>
-                <input type="number" name="backup_frequency_days" min="0" value="{{ form_defaults.backup_frequency_days }}" required />
-                <label>Network Monitoring Level (1-10)</label>
-                <input type="number" name="network_monitoring_level" min="1" max="10" value="{{ form_defaults.network_monitoring_level }}" required />
-            </div>
-
-            <div class="form-actions">
-                <button type="button" id="demo-fill" class="secondary-button">Auto-fill Demo Data</button>
-                <button type="submit" class="primary-button">Predict Risk Level 1</button>
-            </div>
-        </form>
-
-        <aside class="side-panel">
-            <h2>Assessment Guidance</h2>
-            <ul class="side-list">
-                <li>Use realistic values from your current environment rather than ideal targets.</li>
-                <li>Complete the profile section first so the report feels more professional and traceable.</li>
-                <li>Low training and phishing scores often increase risk even if technical controls exist.</li>
-                <li>Frequent backups and strong monitoring can reduce operational exposure.</li>
-                <li>Use the demo button during presentations when you need a quick walkthrough.</li>
-            </ul>
-
-            <div class="mini-note">
-                <strong>Tip for viva/demo:</strong>
-                <p>Run the form multiple times with different organization profiles. Because the previous values stay in the form, it becomes easier to compare scenarios and explain how the result changes.</p>
-            </div>
-        </aside>
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.assessmentConfig = {
+        roleDepartmentMap: {{ role_department_map|tojson }},
+        stepTitles: {{ (form_groups|map(attribute='title')|list + ['Review and predict'])|tojson }}
+    };
+</script>
 {% endblock %}

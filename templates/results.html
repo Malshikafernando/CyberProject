@@ -1,42 +1,104 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<section class="section page-section result-section reveal">
-    <div class="mini-hero mini-hero-result">
-        <div class="mini-hero-copy">
-            <span class="eyebrow">Prediction Outcome</span>
-            <h1>Risk Assessment Results</h1>
-            <p>The result page now follows naturally after the assessment, so it no longer needs a separate navigation tab.</p>
+<section class="results-page">
+    <div class="site-container">
+        <div class="results-heading">
+            <div>
+                <span class="eyebrow">Assessment complete</span>
+                <h1>Cybersecurity risk results</h1>
+                <p>Use this result to prioritize discussion and follow-up actions.</p>
+            </div>
+            <a href="{{ url_for('predict_page') }}" class="secondary-button">Edit assessment</a>
         </div>
-        <div class="mini-hero-visual">
-            <div class="result-signal {{ color }}-signal"></div>
-            <div class="mini-shield result-shield">
-                <div class="mini-shield-core"></div>
+
+        <div class="result-summary risk-{{ risk_level|lower }}">
+            <div class="risk-verdict">
+                <div class="risk-gauge" style="--risk-value: {{ confidence }}" aria-label="{{ confidence }} percent prediction confidence">
+                    <span class="gauge-sweep"></span>
+                    <span class="risk-icon" aria-hidden="true">{% if risk_level == 'Low' %}✓{% elif risk_level == 'Medium' %}!{% else %}↑{% endif %}</span>
+                </div>
+                <div>
+                    <span>Predicted risk level</span>
+                    <h2>{{ risk_level }} risk</h2>
+                    <p>{{ explanation }}</p>
+                </div>
+            </div>
+            <div class="confidence-block">
+                <span>Prediction confidence</span>
+                <strong>{{ confidence }}%</strong>
+                <div class="confidence-track"><span style="width: {{ confidence }}%"></span></div>
+                <small>Highest probability across the three risk classes</small>
             </div>
         </div>
-    </div>
 
-    <div class="section-header">
-        <p>The predicted class below reflects the combined effect of your security controls, awareness indicators, and operational practices.</p>
-    </div>
+        <div class="results-grid">
+            <section class="result-panel">
+                <div class="panel-heading">
+                    <div><span class="panel-kicker">Probability breakdown</span><h2>Risk distribution</h2></div>
+                </div>
+                <div class="probability-list">
+                    {% for label, probability in probabilities.items() %}
+                    <div class="probability-row">
+                        <div><span class="risk-dot {{ label|lower }}"></span><strong>{{ label }}</strong><span>{{ '%.1f'|format(probability * 100) }}%</span></div>
+                        <div class="probability-track"><span class="{{ label|lower }} animated-bar" style="--bar-value: {{ probability * 100 }}%"></span></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
 
-    <div class="result-card {{ color }}-card">
-        <span class="result-label">Predicted Risk Level</span>
-        <h2>{{ risk_level }}</h2>
-        <p>{{ explanation }}</p>
-        <div class="result-badges">
-            <span>Model-driven output</span>
-            <span>Real-time assessment</span>
-            <span>Awareness-focused guidance</span>
+            <section class="result-panel context-panel">
+                <div class="panel-heading"><div><span class="panel-kicker">Assessment context</span><h2>Key details</h2></div></div>
+                <dl class="context-list">
+                    <div><dt>Employee role</dt><dd>{{ inputs.employee_role }}</dd></div>
+                    <div><dt>Department</dt><dd>{{ inputs.department }}</dd></div>
+                    <div><dt>Action priority</dt><dd><span class="priority-badge">{{ action_priority }}</span></dd></div>
+                    <div><dt>Training focus</dt><dd>{{ training_focus }}</dd></div>
+                </dl>
+            </section>
         </div>
-    </div>
 
-    <div class="recommendation-card">
-        <h3>Recommended Action</h3>
-        <p>{{ recommendation }}</p>
-        <div class="result-actions">
-            <a href="{{ url_for('download_report') }}" class="secondary-button">Download Report</a>
-            <a href="{{ url_for('predict_page') }}#assessment-form" class="primary-button">Run Another Test</a>
+        <section class="recommendations-section">
+            <div class="section-heading">
+                <span class="eyebrow">Prioritized response</span>
+                <h2>Recommended actions</h2>
+                <p>These actions are selected from transparent rules based on the submitted control gaps and employee role.</p>
+            </div>
+
+            {% if risk_categories %}
+            <div class="category-row" aria-label="Main risk categories">
+                <span>Main risk categories</span>
+                {% for category in risk_categories %}<strong><span class="category-icon" aria-hidden="true">{% if 'Access' in category or 'Identity' in category %}⌁{% elif 'Device' in category or 'Endpoint' in category %}▣{% elif 'Training' in category or 'Awareness' in category %}◉{% elif 'Incident' in category %}!{% elif 'Data' in category %}◇{% else %}◆{% endif %}</span>{{ category }}</strong>{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="recommendation-list">
+                {% for item in recommendation_details %}
+                <article class="recommendation-item">
+                    <div class="recommendation-rank">{{ '%02d'|format(loop.index) }}</div>
+                    <div class="recommendation-copy">
+                        <div class="recommendation-meta">
+                            <span class="priority-badge">{{ item.priority }}</span>
+                            <span>{{ item.suggested_timeframe }}</span>
+                            <span>{{ item.risk_category }}</span>
+                        </div>
+                        <h3>{{ item.recommendation_title }}</h3>
+                        <p>{{ item.recommendation_description }}</p>
+                        <small>Owner: {{ item.responsible_owner }}</small>
+                    </div>
+                </article>
+                {% else %}
+                <article class="empty-state">
+                    <h3>Maintain the current security baseline</h3>
+                    <p>No specific control-gap rule was triggered. Repeat the assessment after material changes.</p>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="results-actions">
+            <a href="{{ url_for('download_report') }}" class="secondary-button">Download PDF report</a>
+            <a href="{{ url_for('predict_page') }}" class="primary-button">Start new assessment</a>
         </div>
     </div>
 </section>

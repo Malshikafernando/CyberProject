@@ -1,0 +1,132 @@
+{
+  "model_name": "Role-Based Cybersecurity Risk Prediction Model",
+  "model_version": "2.0.0",
+  "dataset": "G:\\4th year\\Final Year Project\\CyberProject\\Role_Based_Cybersecurity_Risk_Dataset_5500.xlsx",
+  "dataset_rows": 5500,
+  "input_features": 63,
+  "target_distribution": {
+    "Medium": 2183,
+    "Low": 2096,
+    "High": 1221
+  },
+  "organization_group_split": {
+    "training_organizations": 176,
+    "testing_organizations": 44,
+    "overlap": 0
+  },
+  "selected_model": "logistic_regression",
+  "selection_metric": "macro_f1",
+  "cross_validation_on_training_organizations": {
+    "logistic_regression": {
+      "accuracy": {
+        "mean": 0.876467,
+        "std": 0.020519
+      },
+      "balanced_accuracy": {
+        "mean": 0.87878,
+        "std": 0.015737
+      },
+      "macro_f1": {
+        "mean": 0.872108,
+        "std": 0.016194
+      }
+    },
+    "random_forest": {
+      "accuracy": {
+        "mean": 0.769429,
+        "std": 0.036991
+      },
+      "balanced_accuracy": {
+        "mean": 0.731661,
+        "std": 0.030711
+      },
+      "macro_f1": {
+        "mean": 0.751243,
+        "std": 0.028794
+      }
+    },
+    "extra_trees": {
+      "accuracy": {
+        "mean": 0.777986,
+        "std": 0.033476
+      },
+      "balanced_accuracy": {
+        "mean": 0.740112,
+        "std": 0.028558
+      },
+      "macro_f1": {
+        "mean": 0.760629,
+        "std": 0.027245
+      }
+    }
+  },
+  "unseen_organization_holdout": {
+    "accuracy": 0.876689,
+    "balanced_accuracy": 0.879228,
+    "macro_f1": 0.875729,
+    "confusion_matrix_labels": [
+      "Low",
+      "Medium",
+      "High"
+    ],
+    "confusion_matrix": [
+      [
+        443,
+        40,
+        0
+      ],
+      [
+        42,
+        346,
+        40
+      ],
+      [
+        0,
+        24,
+        249
+      ]
+    ],
+    "classification_report": {
+      "Low": {
+        "precision": 0.9134020618556701,
+        "recall": 0.917184265010352,
+        "f1-score": 0.9152892561983471,
+        "support": 483.0
+      },
+      "Medium": {
+        "precision": 0.8439024390243902,
+        "recall": 0.8084112149532711,
+        "f1-score": 0.8257756563245824,
+        "support": 428.0
+      },
+      "High": {
+        "precision": 0.8615916955017301,
+        "recall": 0.9120879120879121,
+        "f1-score": 0.8861209964412812,
+        "support": 273.0
+      },
+      "accuracy": 0.8766891891891891,
+      "macro avg": {
+        "precision": 0.8729653987939301,
+        "recall": 0.8792277973505117,
+        "f1-score": 0.8757286363214035,
+        "support": 1184.0
+      },
+      "weighted avg": {
+        "precision": 0.8763327471711994,
+        "recall": 0.8766891891891891,
+        "f1-score": 0.8762058477020208,
+        "support": 1184.0
+      }
+    }
+  },
+  "top_feature_importance": [],
+  "model_sha256": "408fd758581d678a1dd189f4d45572aea7b85455c8e7b91bd0c982224ea3987f",
+  "library_versions": {
+    "pandas": "3.0.2",
+    "scikit_learn": "1.8.0",
+    "joblib": "1.5.3"
+  },
+  "trained_at_utc": "2026-09-30T15:33:13.013735+00:00",
+  "data_notice": "Trained on a synthetic academic research dataset."
+}

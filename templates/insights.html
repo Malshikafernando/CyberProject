@@ -35,15 +35,16 @@
 <script>
 const featureData = {
     labels: [
-        'Firewall', 'MFA', 'Training', 'Vulnerabilities', 'Password Policy',
-        'Incidents', 'Encryption', 'Backup', 'Monitoring', 'Phishing'
+        'Security incidents', 'Breach history', 'Account compromise', 'Sensitive data: high',
+        'Operations role', 'Operations department', 'Sensitive data: low', 'No access review',
+        'No backups', 'Daily backups'
     ],
-    values: [18, 15, 14, 11, 7, 8, 12, 3, 2, 10]
+    values: [1.394, 0.982, 0.975, 0.965, 0.926, 0.926, 0.835, 0.696, 0.644, 0.627]
 };
 
 const distributionData = {
     labels: ['Low', 'Medium', 'High'],
-    values: [15, 26, 59]
+    values: [38.1, 39.7, 22.2]
 };
 
 function renderInsights() {
@@ -54,10 +55,10 @@ function renderInsights() {
             data: {
                 labels: featureData.labels,
                 datasets: [{
-                    label: 'Impact Score',
+                    label: 'Mean absolute coefficient',
                     data: featureData.values,
-                    backgroundColor: ['#155eef', '#2563eb', '#2b7fff', '#4490ff', '#5aa0ff', '#79b4ff', '#9fc8ff', '#bdd9ff', '#d8e8ff', '#8a5cf6'],
-                    borderRadius: 10,
+                    backgroundColor: '#00A86B',
+                    borderRadius: 6,
                 }]
             },
             options: {
@@ -65,7 +66,7 @@ function renderInsights() {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {stepSize: 5}
+                        ticks: {stepSize: 0.25}
                     }
                 }
             }
@@ -80,7 +81,7 @@ function renderInsights() {
                 labels: distributionData.labels,
                 datasets: [{
                     data: distributionData.values,
-                    backgroundColor: ['#3aa76d', '#f2b339', '#e2574c'],
+                    backgroundColor: ['#087a51', '#e69b16', '#c43d3d'],
                     borderWidth: 0
                 }]
             },

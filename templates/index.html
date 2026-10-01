@@ -1,128 +1,116 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<section class="hero reveal">
-    <div class="hero-copy">
-        <span class="eyebrow">Final Year Research · Sri Lanka Context</span>
-        <h1>Measure cyber risk <span class="accent-text">before</span> it becomes an incident.</h1>
-        <p>CyberRisk Compass predicts an organization's cybersecurity risk level using machine learning, security controls, and human awareness signals through a calm, research-focused interface built for final year project presentation.</p>
-        <div class="hero-actions">
-            <a class="cta-button" href="{{ url_for('predict_page') }}">Start Risk Assessment</a>
-            <a class="secondary-button" href="{{ url_for('research') }}">View Methodology</a>
-        </div>
-        <div class="hero-metrics">
-            <div class="metric-card">
-                <span class="metric-label">Model Accuracy</span>
-                <strong>89.1%</strong>
+<section class="hero-section">
+    <div class="site-container hero-layout">
+        <div class="hero-copy">
+            <span class="eyebrow">Role-based cyber risk intelligence</span>
+            <h1>Turn security signals into clear, prioritized action.</h1>
+            <p>Assess an employee's access, controls, behaviour, and incident history to identify risk and receive role-specific recommendations.</p>
+            <div class="hero-actions">
+                <a class="primary-button" href="{{ url_for('predict_page') }}">Start risk assessment</a>
+                <a class="text-link" href="{{ url_for('research') }}">Explore the methodology <span aria-hidden="true">→</span></a>
             </div>
-            <div class="metric-card">
-                <span class="metric-label">Risk Indicators</span>
-                <strong>10 measured signals</strong>
-            </div>
-            <div class="metric-card">
-                <span class="metric-label">Risk Levels</span>
-                <strong>Low / Medium / High</strong>
+            <div class="trust-row" aria-label="Assessment capabilities">
+                <span>63 validated indicators</span>
+                <span>3 risk levels</span>
+                <span>20 action rules</span>
             </div>
         </div>
-        <div class="framework-strip">
-            <span>NIST CSF</span>
-            <span>ISO/IEC 27001</span>
-            <span>OWASP Top 10</span>
-            <span>CIS Controls</span>
-            <span>Sri Lanka CERT</span>
+
+        <div class="hero-visual" aria-label="Cybersecurity signals being analysed into a risk result">
+            <div class="cyber-orbit" aria-hidden="true">
+                <span class="orbit orbit-one"><i></i><i></i></span>
+                <span class="orbit orbit-two"><i></i><i></i><i></i></span>
+                <span class="scan-wave"></span>
+                <span class="cyber-core">
+                    <svg viewBox="0 0 48 48"><path d="M24 4 39 10v11c0 10.4-6.1 18.7-15 23-8.9-4.3-15-12.6-15-23V10l15-6Z"/><path d="m17 24 5 5 10-11"/></svg>
+                </span>
+                <span class="signal-label signal-users">Identity</span>
+                <span class="signal-label signal-devices">Devices</span>
+                <span class="signal-label signal-controls">Controls</span>
+            </div>
+        <div class="product-preview">
+            <div class="preview-header">
+                <span>Assessment summary</span>
+                <span class="status-dot"><i></i> Model ready</span>
+            </div>
+            <div class="preview-risk">
+                <div>
+                    <span class="preview-label">Predicted risk</span>
+                    <strong>Medium</strong>
+                </div>
+                <div class="score-ring" aria-label="82 percent confidence">82<span>%</span></div>
+            </div>
+            <div class="preview-bars">
+                <div><span>Access controls</span><i><b style="width: 72%"></b></i></div>
+                <div><span>Awareness</span><i><b style="width: 58%"></b></i></div>
+                <div><span>Device security</span><i><b style="width: 84%"></b></i></div>
+            </div>
+            <div class="preview-action">
+                <span>Priority action</span>
+                <strong>Strengthen multi-factor authentication</strong>
+            </div>
+        </div>
         </div>
     </div>
-    <div class="hero-visual">
-        <div class="hero-stage hero-stage-photo">
-            <img
-                class="hero-photo"
-                src="/images/hero-realworld-cyber.png"
-                alt="Cybersecurity analyst reviewing risk indicators with a central security shield and connected enterprise defense signals"
-            />
-            <div class="hero-photo-overlay"></div>
-            <span class="status-chip chip-top-left">MFA Enabled</span>
-            <span class="status-chip chip-top-right">Firewall Active</span>
-            <span class="status-chip chip-bottom-left">Awareness 87%</span>
-            <span class="status-chip chip-bottom-right">Monitoring 24/7</span>
+</section>
+
+<section class="content-section">
+    <div class="site-container">
+        <div class="section-heading centered-heading">
+            <span class="eyebrow">A guided workflow</span>
+            <h2>From assessment to action in three clear stages</h2>
+            <p>The platform keeps a detailed model simple for the person completing the assessment.</p>
+        </div>
+        <div class="process-grid">
+            <article class="process-card">
+                <span class="process-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 3h10v4H7zM5 5H3v16h18V5h-2M7 12h10M7 16h7"/></svg></span>
+                <span class="step-number">01</span>
+                <h3>Complete the assessment</h3>
+                <p>Work through six short steps covering organization context, employee access, controls, behaviour, and incidents.</p>
+            </article>
+            <article class="process-card">
+                <span class="process-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9M12 7v5l4 2M15 3h6v6"/></svg></span>
+                <span class="step-number">02</span>
+                <h3>Receive a risk prediction</h3>
+                <p>The validated pipeline returns Low, Medium, and High probabilities with an overall confidence score.</p>
+            </article>
+            <article class="process-card">
+                <span class="process-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m4 13 4 4L20 5M4 21h16"/></svg></span>
+                <span class="step-number">03</span>
+                <h3>Prioritize improvements</h3>
+                <p>Transparent recommendation rules turn control gaps into practical actions, owners, and timeframes.</p>
+            </article>
         </div>
     </div>
 </section>
 
-<section class="section overview-panel reveal">
-    <div class="section-header">
-        <h1>Research Overview</h1>
-        <p>This interface follows the same calm, structured direction as your reference site: clear problem framing, explainable machine learning, and a presentation-friendly narrative flow.</p>
-    </div>
-
-    <div class="section-grid">
-        <article class="feature-card">
-            <h3>The Problem</h3>
-            <p>Many organizations still respond to phishing, ransomware, and data breaches only after damage has already occurred. Localized risk models for Sri Lankan organizations are limited, especially those that combine both technical and awareness-related indicators.</p>
-        </article>
-        <article class="feature-card">
-            <h3>Our Solution</h3>
-            <p>This project provides a structured web application that accepts operational security inputs, classifies them into a risk level with a Random Forest model, and returns practical next-step recommendations through an explainable interface.</p>
-        </article>
-    </div>
-</section>
-
-<section class="section feature-grid reveal">
-    <article class="feature-card accent-card">
-        <h3>Security Controls</h3>
-        <p>Measures firewall posture, MFA usage, encryption coverage, password policy strength, backup frequency, and monitoring readiness.</p>
-    </article>
-    <article class="feature-card">
-        <h3>Human Awareness</h3>
-        <p>Captures employee training, phishing test performance, and incident history to reflect the human side of cyber risk.</p>
-    </article>
-    <article class="feature-card">
-        <h3>Explainable ML</h3>
-        <p>Uses a Random Forest classifier to generate a traceable low, medium, or high risk output with practical recommendations.</p>
-    </article>
-</section>
-
-<section class="section timeline-panel reveal">
-    <div class="section-header">
-        <h1>How It Works</h1>
-        <p>A step-by-step flow designed for project presentations, demonstrations, and report walkthroughs.</p>
-    </div>
-
-    <div class="timeline-grid">
-        <article class="timeline-step">
-            <span>01</span>
-            <h3>Collect Inputs</h3>
-            <p>Collect technical controls and human awareness indicators through a short guided assessment form.</p>
-        </article>
-        <article class="timeline-step">
-            <span>02</span>
-            <h3>Preprocess Data</h3>
-            <p>Normalize and validate the input values against the expected trained feature structure.</p>
-        </article>
-        <article class="timeline-step">
-            <span>03</span>
-            <h3>ML Prediction</h3>
-            <p>The Random Forest classifier maps the feature vector into a low, medium, or high cybersecurity risk class.</p>
-        </article>
-        <article class="timeline-step">
-            <span>04</span>
-            <h3>Explain & Recommend</h3>
-            <p>Display the verdict with supporting explanation, guidance, and awareness-oriented follow-up actions.</p>
-        </article>
+<section class="content-section muted-section">
+    <div class="site-container evidence-layout">
+        <div class="section-heading">
+            <span class="eyebrow">Validated methodology</span>
+            <h2>Designed to reduce leakage and support fair evaluation.</h2>
+            <p>The model was selected using organization-separated cross-validation and evaluated against employees from organizations excluded from training.</p>
+            <a class="secondary-button" href="{{ url_for('research') }}">View research details</a>
+        </div>
+        <div class="evidence-grid">
+            <div><strong>87.7%</strong><span>Holdout accuracy</span></div>
+            <div><strong>87.6%</strong><span>Macro-F1 score</span></div>
+            <div><strong>44</strong><span>Unseen test organizations</span></div>
+            <div><strong>0</strong><span>Organization overlap</span></div>
+        </div>
     </div>
 </section>
 
-<section class="section reveal">
-    <div class="section-header">
-        <h1>Ready To Measure Your Risk?</h1>
-        <p>Start the assessment and generate a risk verdict in a few minutes using the same clean presentation style as the reference interface.</p>
-    </div>
-    <div class="callout-card">
+<section class="content-section">
+    <div class="site-container callout-card">
         <div>
-            <span class="metric-label">Start assessment</span>
-            <h3>Get a clear, explainable cyber risk verdict</h3>
-            <p>Use the prediction form to see how security controls and awareness levels affect the final classification.</p>
+            <span class="eyebrow">Ready to begin?</span>
+            <h2>Build a clearer picture of employee cyber risk.</h2>
+            <p>Complete the guided assessment and receive a prediction with prioritized actions.</p>
         </div>
-        <a class="cta-button" href="{{ url_for('predict_page') }}">Try The Assessment</a>
+        <a class="primary-button light-button" href="{{ url_for('predict_page') }}">Start assessment</a>
     </div>
 </section>
 {% endblock %}

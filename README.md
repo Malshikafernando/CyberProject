@@ -1,11 +1,13 @@
 # CyberProject
 
-Cybersecurity Risk Prediction and Awareness System for the final year project. This Flask application predicts cybersecurity risk levels from user inputs, shows awareness content, and provides supporting research and visual insights.
+Role-based Cybersecurity Risk Prediction and Awareness System for the final year project. The Flask application validates 63 organization and employee assessment fields, predicts a Low, Medium, or High risk level, reports class probabilities, and selects recommendations from transparent rules.
 
 ## Features
 
-- Predicts `Low`, `Medium`, or `High` cybersecurity risk
-- Gives recommendations based on the predicted risk level
+- Predicts `Low`, `Medium`, or `High` role-based cybersecurity risk
+- Uses preprocessing and classification from one saved model package
+- Reports prediction confidence and all class probabilities
+- Selects recommendations from the dataset's rule table
 - Includes research, FAQ, awareness, contact, and insights pages
 - Lets users download a simple report after generating a prediction
 
@@ -75,7 +77,8 @@ pytest
 
 ## Important Notes
 
-- The application expects `cyber_model.pkl` inside the `CyberProject` folder.
-- `scaler.pkl` is optional. If it is absent, the app still works.
+- The application expects `role_based_cybersecurity_risk_model.pkl` inside the `CyberProject` folder.
+- The model package contains preprocessing, classifier, input schema, evaluation metadata, and recommendation rules.
 - The folders like `flask-template` and `flask-template-1` are older template copies and are not required for the main app.
-- If you need to rebuild the model from the Excel dataset, run `.\.venv\Scripts\python.exe scripts\train_model.py`.
+- Rebuild the model from the Excel dataset with `.\.venv\Scripts\python.exe scripts\train_model.py`.
+- Training uses organization-separated cross-validation and an unseen-organization holdout to prevent organization leakage.

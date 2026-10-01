@@ -15,22 +15,81 @@ spec.loader.exec_module(app_module)
 
 @pytest.fixture()
 def client():
-    app_module.app.config["TESTING"] = True
-    with app_module.app.test_client() as client:
-        yield client
+    app_module.app.config.update(TESTING=True, SECRET_KEY="test-secret")
+    with app_module.app.test_client() as test_client:
+        yield test_client
+
+
+@pytest.fixture()
+def package():
+    loaded = app_module.load_model_package()
+    assert loaded is not None
+    return loaded
+
+
+def valid_assessment(package):
+    values = app_module.default_form_values(package)
+    values["assessment_reference"] = "TEST-001"
+    return values
+
+
+def test_model_package_has_expected_deployment_contract(package):
+    assert package["model_version"] == "2.0.0"
+    assert len(package["feature_columns"]) == 63
+    assert set(package["class_labels"]) == {"Low", "Medium", "High"}
+    assert package["selected_model"] == "logistic_regression"
 
 
 def test_home_page_loads(client):
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Cybersecurity Risk Prediction System" in response.data
+    assert b"Turn security signals into clear, prioritized action" in response.data
 
 
-def test_predict_page_loads(client):
+def test_predict_page_renders_model_fields(client):
     response = client.get("/predict-risk")
     assert response.status_code == 200
-    assert b"Predict Cybersecurity Risk" in response.data
-    assert b"Assessment Profile" in response.data
+    assert b"Guided assessment" in response.data
+    assert b"Review and predict" in response.data
+    assert b'name="employee_role"' in response.data
+    assert b'name="mfa_enabled"' in response.data
+    assert b'name="security_training_score"' in response.data
+
+
+def test_assessment_parser_preserves_exact_feature_order(package):
+    frame, parsed = app_module.parse_assessment(valid_assessment(package), package)
+    assert frame.columns.tolist() == package["feature_columns"]
+    assert len(parsed) == 63
+
+
+def test_out_of_range_value_is_rejected(client, package):
+    data = valid_assessment(package)
+    data["remote_work_percentage"] = "101"
+    response = client.post("/predict", data=data, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Remote Work Percentage must be between" in response.data
+
+
+def test_role_department_mismatch_is_rejected(client, package):
+    data = valid_assessment(package)
+    data["department"] = "Academic"
+    response = client.post("/predict", data=data, follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Department must be" in response.data
+
+
+def test_prediction_runs_through_real_saved_model(client, package):
+    response = client.post("/predict", data=valid_assessment(package), follow_redirects=True)
+    assert response.status_code == 200
+    assert b"Predicted risk level" in response.data
+    assert b"Prediction confidence" in response.data
+    assert b"Recommended actions" in response.data
+
+
+def test_prediction_session_cookie_remains_within_browser_limit(client, package):
+    response = client.post("/predict", data=valid_assessment(package))
+    assert response.status_code == 302
+    assert len(response.headers.get("Set-Cookie", "")) < 4093
 
 
 def test_results_redirect_without_session(client):
@@ -39,118 +98,26 @@ def test_results_redirect_without_session(client):
     assert "/predict-risk" in response.headers["Location"]
 
 
-def test_download_report_redirect_without_prediction(client):
-    response = client.get("/download-report", follow_redirects=True)
-    assert response.status_code == 200
-    assert b"Please generate a prediction before downloading a report." in response.data
-
-
-def test_download_report_with_prediction_in_session(client):
-    with client.session_transaction() as session:
-        session["prediction_result"] = {
-            "risk_level": "Medium",
-            "recommendation": "Improve awareness and monitoring for stronger protection.",
-            "explanation": "The model uses security inputs to determine risk.",
-            "inputs": {
-                "firewall_status": "Yes",
-                "mfa_usage": "Yes",
-                "encryption_usage": "Yes",
-                "employee_training_score": 75,
-                "phishing_test_score": 70,
-                "unpatched_vulnerabilities": 1,
-                "incident_history_count": 0,
-                "password_policy_strength": 8,
-                "backup_frequency_days": 7,
-                "network_monitoring_level": 8,
-            },
-        }
-
+def test_report_download_after_real_prediction(client, package):
+    client.post("/predict", data=valid_assessment(package))
     response = client.get("/download-report")
     assert response.status_code == 200
-    assert response.mimetype == "application/msword"
-    assert b"Cyber Risk Assessment Report" in response.data
-    assert b"Priority Recommendations" in response.data
-    assert b"Human Awareness" in response.data
+    assert response.mimetype == "application/pdf"
+    assert response.data.startswith(b"%PDF-")
+    assert "cyberrisk-compass-assessment-report.pdf" in response.headers["Content-Disposition"]
+    assert len(response.data) > 20_000
 
 
-def test_predict_redirects_when_model_unavailable(client, monkeypatch):
-    monkeypatch.setattr(app_module, "load_model", lambda: None)
+def test_recommendation_rule_engine_matches_known_gap(package):
+    inputs = valid_assessment(package)
+    inputs["mfa_enabled"] = 0
+    matches = app_module.matched_recommendations(package, inputs, "High")
+    identifiers = {item["recommendation_id"] for item in matches}
+    assert "REC_ACCESS_MFA" in identifiers
 
-    response = client.post(
-        "/predict",
-        data={
-            "firewall_status": "Yes",
-            "mfa_usage": "Yes",
-            "encryption_usage": "Yes",
-            "employee_training_score": 75,
-            "phishing_test_score": 70,
-            "unpatched_vulnerabilities": 1,
-            "incident_history_count": 0,
-            "password_policy_strength": 8,
-            "backup_frequency_days": 7,
-            "network_monitoring_level": 8,
-        },
-        follow_redirects=True,
-    )
 
+def test_missing_model_is_handled(client, monkeypatch):
+    monkeypatch.setattr(app_module, "load_model_package", lambda: None)
+    response = client.post("/predict", data={}, follow_redirects=True)
     assert response.status_code == 200
-    assert b"Prediction model is unavailable." in response.data
-
-
-def test_predict_success_with_mock_model(client, monkeypatch):
-    class DummyModel:
-        def predict(self, rows):
-            assert rows[0] == [1, 1, 75, 1, 8, 0, 1, 7, 8, 70]
-            return ["medium"]
-
-    monkeypatch.setattr(app_module, "load_model", lambda: DummyModel())
-    monkeypatch.setattr(app_module, "load_scaler", lambda: None)
-
-    response = client.post(
-        "/predict",
-        data={
-            "firewall_status": "Yes",
-            "mfa_usage": "Yes",
-            "encryption_usage": "Yes",
-            "employee_training_score": 75,
-            "phishing_test_score": 70,
-            "unpatched_vulnerabilities": 1,
-            "incident_history_count": 0,
-            "password_policy_strength": 8,
-            "backup_frequency_days": 7,
-            "network_monitoring_level": 8,
-        },
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    assert b"Medium" in response.data
-    assert b"Improve awareness and monitoring for stronger protection." in response.data
-
-
-def test_predict_page_prefills_last_assessment_inputs(client):
-    with client.session_transaction() as session:
-        session["last_assessment_inputs"] = {
-            "organization_name": "ABC Finance",
-            "industry_sector": "Finance",
-            "organization_size": "Medium (51-250 employees)",
-            "assessment_owner": "Security Lead",
-            "remote_workforce_level": "High",
-            "critical_data_exposure": "High",
-            "firewall_status": "No",
-            "mfa_usage": "Yes",
-            "encryption_usage": "No",
-            "employee_training_score": 45,
-            "phishing_test_score": 40,
-            "unpatched_vulnerabilities": 9,
-            "incident_history_count": 3,
-            "password_policy_strength": 5,
-            "backup_frequency_days": 21,
-            "network_monitoring_level": 4,
-        }
-
-    response = client.get("/predict-risk")
-    assert response.status_code == 200
-    assert b"ABC Finance" in response.data
-    assert b"Security Lead" in response.data
-    assert b'value="No" selected' in response.data
+    assert b"Prediction model is unavailable" in response.data

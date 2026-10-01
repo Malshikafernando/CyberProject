@@ -1,277 +1,150 @@
+from __future__ import annotations
+
+from collections import OrderedDict
 from datetime import datetime
-from io import BytesIO
 import os
 from pathlib import Path
 
 import joblib
+import pandas as pd
 from flask import Flask, flash, redirect, render_template, request, send_file, session, url_for
+
+from reporting import build_risk_report_pdf
+
 
 app = Flask(__name__, static_folder="public", static_url_path="/static")
 app.secret_key = os.getenv("SECRET_KEY", "cyber_risk_secret_2026")
 
 BASE_DIR = Path(__file__).parent
-MODEL_PATH = BASE_DIR / "cyber_model.pkl"
-SCALER_PATH = BASE_DIR / "scaler.pkl"
+MODEL_PATH = BASE_DIR / "role_based_cybersecurity_risk_model.pkl"
 
-model = None
-scaler = None
+model_package = None
 model_load_attempted = False
-scaler_load_attempted = False
 
 
-def load_model():
-    global model, model_load_attempted
+def load_model_package():
+    global model_package, model_load_attempted
     if model_load_attempted:
-        return model
-
+        return model_package
     model_load_attempted = True
     if not MODEL_PATH.exists():
-        print(f"Warning: Model file not found at {MODEL_PATH}")
+        print(f"Warning: Model package not found at {MODEL_PATH}")
         return None
-
     try:
-        model = joblib.load(MODEL_PATH)
+        loaded = joblib.load(MODEL_PATH)
+        required_keys = {"pipeline", "feature_columns", "field_schema", "class_labels"}
+        if not isinstance(loaded, dict) or not required_keys.issubset(loaded):
+            raise ValueError("The model package has an unsupported structure.")
+        model_package = loaded
     except Exception as error:
-        print(f"Warning: Unable to load model: {error}")
-        model = None
-    return model
+        print(f"Warning: Unable to load model package: {error}")
+        model_package = None
+    return model_package
 
 
-def load_scaler():
-    global scaler, scaler_load_attempted
-    if scaler_load_attempted:
-        return scaler
+def grouped_form_fields(package):
+    groups = OrderedDict()
+    for field in package["field_schema"]:
+        groups.setdefault(field["group"], []).append(field)
+    return [{"title": title, "fields": fields} for title, fields in groups.items()]
 
-    scaler_load_attempted = True
-    if not SCALER_PATH.exists():
-        return None
 
+def default_form_values(package=None):
+    package = package or load_model_package()
+    if package is None:
+        return {}
+    defaults = {field["name"]: field["default"] for field in package["field_schema"]}
+    selected_role = defaults.get("employee_role")
+    expected_department = package.get("role_department_map", {}).get(selected_role)
+    if expected_department:
+        defaults["department"] = expected_department
+    defaults["assessment_reference"] = ""
+    return defaults
+
+
+def parse_assessment(form_data, package) -> tuple[pd.DataFrame, dict]:
+    parsed = {}
+    for field in package["field_schema"]:
+        name = field["name"]
+        raw_value = form_data.get(name)
+        if raw_value is None or str(raw_value).strip() == "":
+            raise ValueError(f"{field['label']} is required.")
+        value = str(raw_value).strip()
+
+        if field["input_kind"] == "binary":
+            normalized = value.lower()
+            if normalized in {"1", "yes", "true", "on"}:
+                parsed[name] = 1
+            elif normalized in {"0", "no", "false", "off"}:
+                parsed[name] = 0
+            else:
+                raise ValueError(f"{field['label']} must be Yes or No.")
+        elif field["input_kind"] == "select":
+            if value not in field["options"]:
+                raise ValueError(f"Invalid value for {field['label']}.")
+            parsed[name] = value
+        else:
+            try:
+                numeric_value = float(value)
+            except ValueError as error:
+                raise ValueError(f"{field['label']} must be numeric.") from error
+            if numeric_value < field["minimum"] or numeric_value > field["maximum"]:
+                raise ValueError(
+                    f"{field['label']} must be between {field['minimum']:g} and {field['maximum']:g}."
+                )
+            parsed[name] = int(numeric_value) if field["numeric_type"] == "int" else numeric_value
+
+    frame = pd.DataFrame([parsed]).reindex(columns=package["feature_columns"])
+    expected_department = package.get("role_department_map", {}).get(parsed.get("employee_role"))
+    if expected_department and parsed.get("department") != expected_department:
+        raise ValueError(
+            f"Department must be {expected_department} for the selected employee role."
+        )
+    if frame.columns.tolist() != package["feature_columns"]:
+        raise ValueError("Assessment fields do not match the trained model schema.")
+    return frame, parsed
+
+
+def rule_matches(rule, inputs, risk_level) -> bool:
+    if rule["applicable_industry"] not in {"All", inputs.get("industry")}:
+        return False
+    if rule["employee_role"] not in {"All", inputs.get("employee_role")}:
+        return False
+    if rule["risk_level"] == "Medium or High" and risk_level not in {"Medium", "High"}:
+        return False
+    if rule["risk_level"] not in {"Any", "Medium or High", risk_level}:
+        return False
+
+    actual = inputs.get(rule["trigger_feature"])
+    expected_text = str(rule["trigger_value"])
+    operator = rule["trigger_operator"]
     try:
-        scaler = joblib.load(SCALER_PATH)
-    except Exception as error:
-        print(f"Warning: Unable to load scaler: {error}")
-        scaler = None
-    return scaler
+        expected = float(expected_text)
+        actual_comparable = float(actual)
+    except (TypeError, ValueError):
+        expected = expected_text
+        actual_comparable = str(actual)
+
+    if operator == "equals":
+        return actual_comparable == expected
+    if operator == "greater than":
+        return actual_comparable > expected
+    if operator == "less than":
+        return actual_comparable < expected
+    if operator == "greater than or equal to":
+        return actual_comparable >= expected
+    return False
 
 
-def normalize_yes_no(value):
-    return 1 if str(value).strip().lower() in ("yes", "y", "1", "true", "on") else 0
-
-
-def yes_no_label(value):
-    return "Yes" if normalize_yes_no(value) else "No"
-
-
-def default_form_values():
-    return {
-        "organization_name": "",
-        "industry_sector": "Technology",
-        "organization_size": "Small (1-50 employees)",
-        "assessment_owner": "",
-        "remote_workforce_level": "Moderate",
-        "critical_data_exposure": "Medium",
-        "firewall_status": "Yes",
-        "mfa_usage": "Yes",
-        "encryption_usage": "Yes",
-        "employee_training_score": 60,
-        "phishing_test_score": 55,
-        "unpatched_vulnerabilities": 2,
-        "incident_history_count": 1,
-        "password_policy_strength": 7,
-        "backup_frequency_days": 14,
-        "network_monitoring_level": 6,
-    }
-
-
-def build_feature_vector(form_data):
-    features = [
-        normalize_yes_no(form_data.get("firewall_status")),
-        normalize_yes_no(form_data.get("mfa_usage")),
-        int(form_data.get("employee_training_score", 0)),
-        int(form_data.get("unpatched_vulnerabilities", 0)),
-        int(form_data.get("password_policy_strength", 1)),
-        int(form_data.get("incident_history_count", 0)),
-        normalize_yes_no(form_data.get("encryption_usage")),
-        int(form_data.get("backup_frequency_days", 0)),
-        int(form_data.get("network_monitoring_level", 1)),
-        int(form_data.get("phishing_test_score", 0)),
+def matched_recommendations(package, inputs, risk_level):
+    priority_order = {"Immediate": 0, "High": 1, "Medium": 2, "Preventive": 3}
+    matches = [
+        rule
+        for rule in package.get("recommendation_rules", [])
+        if rule_matches(rule, inputs, risk_level)
     ]
-    active_scaler = load_scaler()
-    if active_scaler is not None:
-        features = active_scaler.transform([features])[0].tolist()
-    return features
-
-
-def build_input_snapshot(form_data):
-    return {
-        "organization_name": str(form_data.get("organization_name", "")).strip() or "Not specified",
-        "industry_sector": str(form_data.get("industry_sector", "Not specified")).strip() or "Not specified",
-        "organization_size": str(form_data.get("organization_size", "Not specified")).strip() or "Not specified",
-        "assessment_owner": str(form_data.get("assessment_owner", "")).strip() or "Not specified",
-        "remote_workforce_level": str(form_data.get("remote_workforce_level", "Not specified")).strip() or "Not specified",
-        "critical_data_exposure": str(form_data.get("critical_data_exposure", "Not specified")).strip() or "Not specified",
-        "firewall_status": yes_no_label(form_data.get("firewall_status")),
-        "mfa_usage": yes_no_label(form_data.get("mfa_usage")),
-        "encryption_usage": yes_no_label(form_data.get("encryption_usage")),
-        "employee_training_score": int(form_data.get("employee_training_score", 0)),
-        "phishing_test_score": int(form_data.get("phishing_test_score", 0)),
-        "unpatched_vulnerabilities": int(form_data.get("unpatched_vulnerabilities", 0)),
-        "incident_history_count": int(form_data.get("incident_history_count", 0)),
-        "password_policy_strength": int(form_data.get("password_policy_strength", 1)),
-        "backup_frequency_days": int(form_data.get("backup_frequency_days", 0)),
-        "network_monitoring_level": int(form_data.get("network_monitoring_level", 1)),
-    }
-
-
-def normalize_prediction(prediction):
-    return str(prediction).strip().capitalize()
-
-
-def recommendation_for_level(level):
-    if level == "High":
-        return "Immediate action required. Enable MFA, fix vulnerabilities, and strengthen policies."
-    if level == "Medium":
-        return "Improve awareness and monitoring for stronger protection."
-    return "Maintain current security practices and continue strengthening your defenses."
-
-
-def recommendation_list_for_level(level):
-    if level == "High":
-        return [
-            "Enforce MFA across all remote access, email, and privileged accounts immediately.",
-            "Reduce unpatched vulnerabilities through a prioritized remediation plan within the next review cycle.",
-            "Increase monitoring coverage and alert review frequency for critical assets.",
-            "Run focused phishing awareness drills and incident response walkthroughs.",
-        ]
-    if level == "Medium":
-        return [
-            "Strengthen employee awareness and phishing simulation frequency.",
-            "Improve security monitoring maturity and escalation procedures.",
-            "Review backup cadence and validate restoration readiness.",
-            "Address medium-priority vulnerabilities before they accumulate into larger exposure.",
-        ]
-    return [
-        "Maintain the current baseline of controls and awareness training.",
-        "Continue periodic patching, backup validation, and monitoring reviews.",
-        "Track emerging threats and repeat risk assessment regularly.",
-        "Use the current posture as a benchmark for future comparisons.",
-    ]
-
-
-def input_sections(snapshot):
-    return [
-        {
-            "title": "Assessment Profile",
-            "items": [
-                ("Organization Name", snapshot["organization_name"]),
-                ("Industry Sector", snapshot["industry_sector"]),
-                ("Organization Size", snapshot["organization_size"]),
-                ("Assessment Owner", snapshot["assessment_owner"]),
-                ("Remote Workforce Level", snapshot["remote_workforce_level"]),
-                ("Critical Data Exposure", snapshot["critical_data_exposure"]),
-            ],
-        },
-        {
-            "title": "Security Controls",
-            "items": [
-                ("Firewall Status", snapshot["firewall_status"]),
-                ("MFA Usage", snapshot["mfa_usage"]),
-                ("Encryption Usage", snapshot["encryption_usage"]),
-            ],
-        },
-        {
-            "title": "Human Awareness",
-            "items": [
-                ("Employee Training Score", snapshot["employee_training_score"]),
-                ("Phishing Test Score", snapshot["phishing_test_score"]),
-            ],
-        },
-        {
-            "title": "Vulnerabilities and Incidents",
-            "items": [
-                ("Unpatched Vulnerabilities", snapshot["unpatched_vulnerabilities"]),
-                ("Incident History Count", snapshot["incident_history_count"]),
-            ],
-        },
-        {
-            "title": "Policies and Monitoring",
-            "items": [
-                ("Password Policy Strength", snapshot["password_policy_strength"]),
-                ("Backup Frequency (days)", snapshot["backup_frequency_days"]),
-                ("Network Monitoring Level", snapshot["network_monitoring_level"]),
-            ],
-        },
-    ]
-
-
-def derive_strengths(snapshot):
-    strengths = []
-    if snapshot["firewall_status"] == "Yes":
-        strengths.append("Firewall protection is active.")
-    if snapshot["mfa_usage"] == "Yes":
-        strengths.append("Multi-factor authentication is enabled.")
-    if snapshot["encryption_usage"] == "Yes":
-        strengths.append("Encryption is being used to protect data.")
-    if snapshot["employee_training_score"] >= 70:
-        strengths.append("Employee awareness training score is comparatively strong.")
-    if snapshot["phishing_test_score"] >= 70:
-        strengths.append("Phishing readiness indicates better user awareness.")
-    if snapshot["network_monitoring_level"] >= 7:
-        strengths.append("Monitoring maturity is above the minimum baseline.")
-    if snapshot["backup_frequency_days"] <= 7:
-        strengths.append("Backup frequency supports stronger recovery readiness.")
-    return strengths or ["The environment shows some baseline controls, but improvement opportunities remain."]
-
-
-def derive_concerns(snapshot):
-    concerns = []
-    if snapshot["firewall_status"] == "No":
-        concerns.append("Firewall protection is not active.")
-    if snapshot["mfa_usage"] == "No":
-        concerns.append("MFA is not enabled, increasing account compromise risk.")
-    if snapshot["encryption_usage"] == "No":
-        concerns.append("Encryption is not enabled for broader data protection.")
-    if snapshot["employee_training_score"] < 60:
-        concerns.append("Training score suggests awareness maturity is below target.")
-    if snapshot["phishing_test_score"] < 60:
-        concerns.append("Phishing readiness is below the preferred defensive threshold.")
-    if snapshot["unpatched_vulnerabilities"] > 10:
-        concerns.append("The number of unpatched vulnerabilities is high.")
-    if snapshot["incident_history_count"] > 2:
-        concerns.append("Incident history suggests repeated operational exposure.")
-    if snapshot["password_policy_strength"] < 6:
-        concerns.append("Password policy strength is weaker than recommended.")
-    if snapshot["backup_frequency_days"] > 14:
-        concerns.append("Backup intervals may be too infrequent for reliable recovery.")
-    if snapshot["network_monitoring_level"] < 6:
-        concerns.append("Monitoring maturity is below the recommended operating level.")
-    return concerns or ["No major red-flag indicators were detected from the submitted inputs."]
-
-
-def score_bars(snapshot):
-    security_controls = round(
-        (
-            normalize_yes_no(snapshot["firewall_status"])
-            + normalize_yes_no(snapshot["mfa_usage"])
-            + normalize_yes_no(snapshot["encryption_usage"])
-            + min(snapshot["password_policy_strength"], 10) / 10
-        )
-        / 4
-        * 100
-    )
-    awareness = round((snapshot["employee_training_score"] + snapshot["phishing_test_score"]) / 2)
-    monitoring = round(
-        (
-            min(snapshot["network_monitoring_level"], 10) / 10 * 0.6
-            + max(0, (30 - min(snapshot["backup_frequency_days"], 30))) / 30 * 0.4
-        )
-        * 100
-    )
-    return {
-        "Security Controls": security_controls,
-        "Human Awareness": awareness,
-        "Monitoring Readiness": monitoring,
-    }
+    matches.sort(key=lambda rule: (priority_order.get(rule["priority"], 99), rule["recommendation_id"]))
+    return matches[:8]
 
 
 def risk_badge_meta(level):
@@ -282,21 +155,66 @@ def risk_badge_meta(level):
     return {"label": "Low Risk", "accent": "#26d07c", "panel": "panel-low"}
 
 
-def build_report_context(prediction):
-    snapshot = default_form_values()
-    snapshot.update(prediction.get("inputs", {}))
-    level = prediction["risk_level"]
+def display_value(field, value):
+    if field["input_kind"] == "binary":
+        return "Yes" if int(value) == 1 else "No"
+    return value
+
+
+def report_input_sections(package, inputs):
+    sections = []
+    for group in grouped_form_fields(package):
+        sections.append(
+            {
+                "title": group["title"],
+                "items": [
+                    (field["label"], display_value(field, inputs[field["name"]]))
+                    for field in group["fields"]
+                    if field["name"] in inputs
+                ],
+            }
+        )
+    return sections
+
+
+def build_report_context(prediction, package):
+    probabilities = prediction["probabilities"]
+    recommendations = prediction.get("recommendation_details", [])
+    concerns = [item["recommendation_title"] for item in recommendations]
+    strengths = []
+    inputs = prediction.get("inputs", {})
+    for field_name, label in (
+        ("mfa_enabled", "Multi-factor authentication is enabled."),
+        ("endpoint_protection_enabled", "Endpoint protection is enabled."),
+        ("device_encryption_enabled", "Device encryption is enabled."),
+        ("network_monitoring_enabled", "Network monitoring is enabled."),
+        ("security_training_completed", "Security training is complete."),
+    ):
+        if inputs.get(field_name) == 1:
+            strengths.append(label)
+    if not strengths:
+        strengths.append("No major control strength was identified from the selected baseline checks.")
+    if not concerns:
+        concerns.append("No recommendation rule was triggered by the submitted assessment.")
+
     return {
         "generated_at": datetime.now().strftime("%B %d, %Y %I:%M %p"),
-        "risk_level": level,
+        "risk_level": prediction["risk_level"],
         "recommendation": prediction["recommendation"],
-        "recommendations": recommendation_list_for_level(level),
+        "recommendations": [item["recommendation_description"] for item in recommendations]
+        or [prediction["recommendation"]],
         "explanation": prediction["explanation"],
-        "input_sections": input_sections(snapshot),
-        "strengths": derive_strengths(snapshot),
-        "concerns": derive_concerns(snapshot),
-        "bars": score_bars(snapshot),
-        "badge": risk_badge_meta(level),
+        "input_sections": report_input_sections(package, inputs),
+        "strengths": strengths,
+        "concerns": concerns,
+        "bars": {label: round(probability * 100) for label, probability in probabilities.items()},
+        "badge": risk_badge_meta(prediction["risk_level"]),
+        "confidence": prediction.get("confidence"),
+        "action_priority": prediction.get("action_priority"),
+        "training_focus": prediction.get("training_focus"),
+        "assessment_reference": prediction.get("assessment_reference"),
+        "model_version": prediction.get("model_version"),
+        "recommendation_details": recommendations,
     }
 
 
@@ -307,41 +225,89 @@ def home():
 
 @app.route("/predict-risk")
 def predict_page():
-    saved_inputs = session.get("last_assessment_inputs", {})
-    form_defaults = default_form_values()
-    form_defaults.update(saved_inputs)
-    return render_template("predict.html", title="Predict Risk", active="predict", form_defaults=form_defaults)
+    package = load_model_package()
+    if package is None:
+        flash("Prediction model is unavailable. Train or restore the role-based model package.")
+        return render_template(
+            "predict.html",
+            title="Predict Risk",
+            active="predict",
+            form_defaults={},
+            form_groups=[],
+            role_department_map={},
+        )
+    form_defaults = default_form_values(package)
+    form_defaults.update(session.get("last_assessment_inputs", {}))
+    return render_template(
+        "predict.html",
+        title="Predict Risk",
+        active="predict",
+        form_defaults=form_defaults,
+        form_groups=grouped_form_fields(package),
+        model_version=package["model_version"],
+        role_department_map=package.get("role_department_map", {}),
+    )
 
 
 @app.route("/predict", methods=["POST"])
 def predict():
-    active_model = load_model()
-    if active_model is None:
-        flash("Prediction model is unavailable. Please verify cyber_model.pkl or use a smaller trained model.")
+    package = load_model_package()
+    if package is None:
+        flash("Prediction model is unavailable.")
         return redirect(url_for("predict_page"))
-
     try:
-        features = build_feature_vector(request.form)
-        prediction = active_model.predict([features])[0]
-        risk_level = normalize_prediction(prediction)
-        recommendation = recommendation_for_level(risk_level)
-        explanation = (
-            "The model uses your security controls, awareness metrics, and incident history "
-            "to determine the likely risk category for your environment."
+        frame, parsed_inputs = parse_assessment(request.form, package)
+        pipeline = package["pipeline"]
+        risk_level = str(pipeline.predict(frame)[0]).title()
+        probability_values = pipeline.predict_proba(frame)[0]
+        probability_lookup = {
+            str(label).title(): round(float(probability), 6)
+            for label, probability in zip(package["class_labels"], probability_values)
+        }
+        probabilities = {
+            label: probability_lookup[label] for label in ("Low", "Medium", "High")
+        }
+        confidence = max(probabilities.values())
+        recommendations = matched_recommendations(package, parsed_inputs, risk_level)
+        risk_categories = list(
+            dict.fromkeys(item["risk_category"] for item in recommendations)
+        )[:4]
+        training_focus = (
+            recommendations[0]["awareness_topic"] if recommendations else "General security awareness"
         )
-
-        session["prediction_result"] = {
+        action_priority = recommendations[0]["priority"] if recommendations else "Preventive"
+        primary_recommendation = (
+            recommendations[0]["recommendation_description"]
+            if recommendations
+            else "Maintain existing controls and repeat the assessment after material security changes."
+        )
+        explanation = (
+            f"The role-based model evaluated {len(package['feature_columns'])} organization, access, "
+            f"control, awareness, vulnerability, and incident indicators. Its confidence in the "
+            f"{risk_level} classification is {confidence * 100:.1f}%."
+        )
+        prediction_result = {
             "risk_level": risk_level,
-            "recommendation": recommendation,
+            "confidence": round(confidence * 100, 1),
+            "probabilities": probabilities,
+            "recommendation": primary_recommendation,
+            "recommendation_details": recommendations,
+            "risk_categories": risk_categories,
+            "training_focus": training_focus,
+            "action_priority": action_priority,
             "explanation": explanation,
-            "inputs": build_input_snapshot(request.form),
+            "inputs": parsed_inputs,
+            "assessment_reference": request.form.get("assessment_reference", "").strip(),
+            "model_version": package["model_version"],
         }
-        session["last_assessment_inputs"] = {
-            key: request.form.get(key, default_form_values().get(key, ""))
-            for key in default_form_values().keys()
-        }
+        session["prediction_result"] = prediction_result
+        session["last_assessment_inputs"] = parsed_inputs
         return redirect(url_for("results"))
+    except ValueError as error:
+        flash(str(error))
+        return redirect(url_for("predict_page"))
     except Exception as error:
+        app.logger.exception("Prediction failed")
         flash(f"Unable to process prediction: {error}")
         return redirect(url_for("predict_page"))
 
@@ -351,30 +317,32 @@ def results():
     prediction = session.get("prediction_result")
     if not prediction:
         return redirect(url_for("predict_page"))
-
-    color_map = {
-        "Low": "green",
-        "Medium": "yellow",
-        "High": "red",
-    }
-    prediction["color"] = color_map.get(prediction["risk_level"], "blue")
-    return render_template("results.html", title="Results", active="results", **prediction)
+    color_map = {"Low": "green", "Medium": "yellow", "High": "red"}
+    return render_template(
+        "results.html",
+        title="Results",
+        active="results",
+        color=color_map.get(prediction["risk_level"], "blue"),
+        **prediction,
+    )
 
 
 @app.route("/download-report")
 def download_report():
     prediction = session.get("prediction_result")
-    if not prediction:
+    package = load_model_package()
+    if not prediction or package is None:
         flash("Please generate a prediction before downloading a report.")
         return redirect(url_for("predict_page"))
-
-    report_html = render_template("report_download.html", **build_report_context(prediction))
-    report_bytes = BytesIO(report_html.encode("utf-8"))
+    report_pdf = build_risk_report_pdf(
+        build_report_context(prediction, package),
+        BASE_DIR / "public" / "images" / "cyberrisk-compass-logo.png",
+    )
     return send_file(
-        report_bytes,
+        report_pdf,
         as_attachment=True,
-        download_name="cyber-risk-report.doc",
-        mimetype="application/msword",
+        download_name="cyberrisk-compass-assessment-report.pdf",
+        mimetype="application/pdf",
     )
 
 
@@ -406,18 +374,16 @@ def contact():
 @app.route("/submit-contact", methods=["POST"])
 def submit_contact():
     name = request.form.get("name", "Visitor").strip()
-    email = request.form.get("email", "not provided").strip()
+    email = request.form.get("email", "").strip()
     message = request.form.get("message", "").strip()
-
     if not email or not message:
         flash("Please provide both your email and message.")
         return redirect(url_for("contact"))
-
     flash(f"Thank you, {name}! Your message has been received. We will respond to {email} soon.")
     return redirect(url_for("contact"))
 
 
 if __name__ == "__main__":
-    debug_mode = os.getenv("FLASK_DEBUG", "").strip().lower() in ("1", "true", "yes", "on")
+    debug_mode = os.getenv("FLASK_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}
     port = int(os.getenv("PORT", "5000"))
     app.run(host="0.0.0.0", port=port, debug=debug_mode)

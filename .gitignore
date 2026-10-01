@@ -9,3 +9,5 @@ server.out.log
 server.err.log
 flask-template/
 flask-template-1/
+output/
+tmp/
