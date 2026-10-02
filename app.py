@@ -12,7 +12,9 @@ from flask import Flask, flash, redirect, render_template, request, send_file, s
 from reporting import build_risk_report_pdf
 
 
-app = Flask(__name__, static_folder="public", static_url_path="/static")
+# Vercel serves files from ``public/`` at the site root.  Using the same URL
+# layout in Flask keeps generated asset links working locally and in production.
+app = Flask(__name__, static_folder="public", static_url_path="")
 app.secret_key = os.getenv("SECRET_KEY", "cyber_risk_secret_2026")
 
 BASE_DIR = Path(__file__).parent

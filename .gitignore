@@ -11,3 +11,6 @@ flask-template/
 flask-template-1/
 output/
 tmp/
+
+.vercel
+.env*
